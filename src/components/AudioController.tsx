@@ -18,7 +18,8 @@ export default function AudioController() {
     const { isIntroComplete } = useIntro();
 
     useEffect(() => {
-        audioRef.current = new Audio("/audio/ambient.wav");
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+        audioRef.current = new Audio(`${basePath}/audio/ambient.wav`);
         audioRef.current.loop = true;
         audioRef.current.volume = 0; // Start at 0 for fade in
 
@@ -78,7 +79,7 @@ export default function AudioController() {
 
     return (
         <div className={styles.container}>
-            <audio ref={audioRef} src="/audio/ambient.wav" />
+            <audio ref={audioRef} src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/audio/ambient.wav`} />
 
             <button
                 className={styles.button}

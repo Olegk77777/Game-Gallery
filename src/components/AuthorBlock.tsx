@@ -15,7 +15,7 @@ const AuthorBlock: React.FC = () => {
         >
             <div className={styles.avatarWrapper}>
                 <Image
-                    src="/assets/author.jpg"
+                    src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/assets/author.jpg`}
                     alt="Oleg Krugliak"
                     fill
                     className={styles.avatar}
