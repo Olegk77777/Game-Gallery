@@ -122,3 +122,14 @@
   .animate-bounce {
     animation: bounce 2s infinite;
   }
+
+  /* Layout Wrapper for Smooth Scroll & Effects */
+  .layout-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+    /* Ensure hardware acceleration context */
+    transform: translate3d(0, 0, 0);
+    will-change: transform, filter;
+  }
