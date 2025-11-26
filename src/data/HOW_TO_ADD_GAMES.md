@@ -20,3 +20,17 @@ The gallery now updates automatically based on the files in the `public/gallery`
 ## File Formats
 -   **Images**: `.jpg`, `.jpeg`, `.png`, `.webp`
 -   **Text**: `.txt` (UTF-8 encoding recommended)
+
+## Updating the Live Site
+
+Since your site is hosted on GitHub Pages, you need to "push" your changes for them to appear online.
+
+1.  **Make your changes**: Add or remove files in the `public/gallery` folder as described above.
+2.  **Open Terminal**: Open your terminal in the project folder.
+3.  **Run these commands**:
+    ```bash
+    git add .
+    git commit -m "Update gallery"
+    git push
+    ```
+4.  **Wait**: GitHub will automatically rebuild and deploy your site. This usually takes 1-2 minutes. You can check the progress in the "Actions" tab of your repository.
