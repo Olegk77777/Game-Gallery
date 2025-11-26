@@ -16,30 +16,35 @@ export default function SmoothScroll() {
         let currentVelocity = 0;
         const wrapper = document.querySelector('.layout-wrapper') as HTMLElement;
 
+        // Force hardware acceleration for Safari
+        if (wrapper) {
+            wrapper.style.willChange = 'transform, filter';
+            wrapper.style.backfaceVisibility = 'hidden';
+            // @ts-ignore
+            wrapper.style.webkitFontSmoothing = 'subpixel-antialiased';
+        }
+
         function raf(time: number) {
             lenis.raf(time);
 
             // Lerp velocity for smooth transition
-            // lenis.velocity can be 0 when stopped, so we lerp towards it
             const targetVelocity = lenis.velocity || 0;
             currentVelocity += (targetVelocity - currentVelocity) * 0.5;
 
             if (wrapper) {
                 // Skew Effect
-                // Clamp skew between -1 and 1 degrees
-                const skew = Math.max(-1, Math.min(1, currentVelocity * 0.025));
+                // Increased sensitivity and range for better visibility in Chrome
+                const skew = Math.max(-2, Math.min(2, currentVelocity * 0.05));
 
                 // RGB Split Effect
                 // Shift red up/left and blue down/right based on velocity
-                // Max shift around 5px
                 const offset = currentVelocity * 0.15;
 
                 // Apply styles
-                // We use transform for skew
-                wrapper.style.transform = `skewY(${skew}deg)`;
+                // Add translate3d(0,0,0) to force hardware acceleration layer
+                wrapper.style.transform = `skewY(${skew}deg) translate3d(0,0,0)`;
 
                 // We use drop-shadow for the RGB split effect on everything (images + text)
-                // Note: drop-shadow can be expensive, but it gives the best "whole site" effect
                 if (Math.abs(offset) > 0.1) {
                     wrapper.style.filter = `
                         drop-shadow(0px ${-offset}px 0 rgba(255,0,0,0.5)) 
@@ -61,6 +66,8 @@ export default function SmoothScroll() {
             if (wrapper) {
                 wrapper.style.transform = 'none';
                 wrapper.style.filter = 'none';
+                wrapper.style.willChange = 'auto';
+                wrapper.style.backfaceVisibility = 'visible';
             }
         };
     }, []);
