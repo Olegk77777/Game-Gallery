@@ -24,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}>
+    <html lang="en" suppressHydrationWarning style={{ cursor: 'none' }}>
+      <body className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`} style={{ cursor: 'none' }}>
         <IntroProvider>
           <Preloader />
           <SmoothScroll />

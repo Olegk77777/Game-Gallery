@@ -15,7 +15,7 @@
     font-family: var(--font-mono);
     font-size: 0.75rem;
     letter-spacing: 0.05em;
-    cursor: pointer;
+    cursor: none !important;
     padding: 0.5rem;
     transition: all 0.3s ease;
     display: flex;

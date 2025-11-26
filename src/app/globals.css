@@ -24,6 +24,23 @@
   cursor: none !important;
 }
 
+/* Ultra-high specificity to override everything including inline styles */
+html[lang] *,
+html *,
+body *,
+div *,
+* {
+  cursor: none !important;
+}
+
+/* Force cursor none on all states */
+*:hover,
+*:active,
+*:focus,
+*:visited {
+  cursor: none !important;
+}
+
 html,
 body {
   max-width: 100vw;
@@ -33,7 +50,12 @@ body {
   font-family: var(--font-primary), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  cursor: none;
+  cursor: none !important;
+}
+
+html *,
+body * {
+  cursor: none !important;
 }
 
 body::before {
