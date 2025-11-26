@@ -73,19 +73,37 @@ select,
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
+  cursor: none !important;
 }
 
 ::-webkit-scrollbar-track {
   background: var(--bg-color);
+  cursor: none !important;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--accent-dim);
   border-radius: 4px;
+  cursor: none !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-color);
+  cursor: none !important;
+}
+
+/* Images and media */
+img,
+video,
+canvas,
+svg {
+  cursor: none !important;
+}
+
+/* All pseudo-elements */
+*::before,
+*::after {
+  cursor: none !important;
 }
 
 /* Utility Classes */

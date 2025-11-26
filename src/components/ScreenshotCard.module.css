@@ -4,7 +4,11 @@
     max-width: 1200px;
     margin: 0 auto;
     margin-bottom: 3rem;
-    cursor: none;
+    cursor: none !important;
+}
+
+.container * {
+    cursor: none !important;
 }
 
 .imageWrapper {
