@@ -18,8 +18,8 @@ export default function SmoothScroll() {
 
         // Force hardware acceleration for Safari
         if (wrapper) {
+            // Removed backface-visibility as it can sometimes conflict with filters in Safari
             wrapper.style.willChange = 'transform, filter';
-            wrapper.style.backfaceVisibility = 'hidden';
             // @ts-ignore
             wrapper.style.webkitFontSmoothing = 'subpixel-antialiased';
         }
@@ -33,25 +33,27 @@ export default function SmoothScroll() {
 
             if (wrapper) {
                 // Skew Effect
-                // Increased sensitivity and range for better visibility in Chrome
-                const skew = Math.max(-2, Math.min(2, currentVelocity * 0.05));
+                // Increased sensitivity again (0.05 -> 0.1)
+                const skew = Math.max(-3, Math.min(3, currentVelocity * 0.1));
 
                 // RGB Split Effect
-                // Shift red up/left and blue down/right based on velocity
                 const offset = currentVelocity * 0.15;
 
                 // Apply styles
-                // Add translate3d(0,0,0) to force hardware acceleration layer
                 wrapper.style.transform = `skewY(${skew}deg) translate3d(0,0,0)`;
 
-                // We use drop-shadow for the RGB split effect on everything (images + text)
                 if (Math.abs(offset) > 0.1) {
-                    wrapper.style.filter = `
+                    const filterVal = `
                         drop-shadow(0px ${-offset}px 0 rgba(255,0,0,0.5)) 
                         drop-shadow(0px ${offset}px 0 rgba(0,0,255,0.5))
                     `;
+                    wrapper.style.filter = filterVal;
+                    // @ts-ignore
+                    wrapper.style.webkitFilter = filterVal; // Explicit webkit prefix for Safari
                 } else {
                     wrapper.style.filter = 'none';
+                    // @ts-ignore
+                    wrapper.style.webkitFilter = 'none';
                 }
             }
 
@@ -66,11 +68,13 @@ export default function SmoothScroll() {
             if (wrapper) {
                 wrapper.style.transform = 'none';
                 wrapper.style.filter = 'none';
+                // @ts-ignore
+                wrapper.style.webkitFilter = 'none';
                 wrapper.style.willChange = 'auto';
-                wrapper.style.backfaceVisibility = 'visible';
             }
         };
     }, []);
 
     return null;
 }
+```
