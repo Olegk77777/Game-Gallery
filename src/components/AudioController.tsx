@@ -18,17 +18,9 @@ export default function AudioController() {
     const { isIntroComplete } = useIntro();
 
     useEffect(() => {
-        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-        audioRef.current = new Audio(`${basePath}/audio/ambient.wav`);
-        audioRef.current.loop = true;
-        audioRef.current.volume = 0; // Start at 0 for fade in
-
-        return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current = null;
-            }
-        };
+        if (audioRef.current) {
+            audioRef.current.volume = 0;
+        }
     }, []);
 
     // Auto-play when intro completes
@@ -79,7 +71,7 @@ export default function AudioController() {
 
     return (
         <div className={styles.container}>
-            <audio ref={audioRef} src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/audio/ambient.wav`} />
+            <audio ref={audioRef} src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/audio/ambient.wav`} loop />
 
             <button
                 className={styles.button}
