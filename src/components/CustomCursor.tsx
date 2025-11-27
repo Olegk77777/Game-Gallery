@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import styles from "./CustomCursor.module.css";
 
@@ -13,12 +13,13 @@ export default function CustomCursor() {
     const cursorXSpring = useSpring(cursorX, springConfig);
     const cursorYSpring = useSpring(cursorY, springConfig);
 
-    useEffect(() => {
+    // Use layout effect to ensure styles are applied before paint
+    useLayoutEffect(() => {
         const moveCursor = (e: MouseEvent) => {
             cursorX.set(e.clientX - 10); // Center the 20px cursor
             cursorY.set(e.clientY - 10);
 
-            // Force cursor none continuously to fight any system overrides
+            // Force cursor none continuously
             if (document.body.style.cursor !== 'none') {
                 document.body.style.cursor = 'none';
             }
@@ -38,12 +39,27 @@ export default function CustomCursor() {
             }
         };
 
+        const forceCursor = () => {
+            if (document.body.style.cursor !== 'none') {
+                document.body.style.cursor = 'none';
+            }
+        };
+
         window.addEventListener("mousemove", moveCursor);
         window.addEventListener("mouseover", handleMouseOver);
+        window.addEventListener("scroll", forceCursor, { passive: true });
+        window.addEventListener("mousedown", forceCursor);
+        window.addEventListener("mouseup", forceCursor);
+
+        // Initial force
+        forceCursor();
 
         return () => {
             window.removeEventListener("mousemove", moveCursor);
             window.removeEventListener("mouseover", handleMouseOver);
+            window.removeEventListener("scroll", forceCursor);
+            window.removeEventListener("mousedown", forceCursor);
+            window.removeEventListener("mouseup", forceCursor);
         };
     }, [cursorX, cursorY]);
 

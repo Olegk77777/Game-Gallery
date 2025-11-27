@@ -64,9 +64,24 @@ body * {
   cursor: none !important;
 }
 
-html *,
-body * {
+/* Specific overrides for dynamic elements */
+[data-framer-portal-id] *,
+[data-radix-portal] * {
   cursor: none !important;
+}
+
+/* Ensure images don't show cursor during load/drag */
+img {
+  cursor: none !important;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Hide cursor on selection */
+::selection {
+  cursor: none !important;
+  background: var(--accent-color);
+  color: var(--bg-color);
 }
 
 body::before {
