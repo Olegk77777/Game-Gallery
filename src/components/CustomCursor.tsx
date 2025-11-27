@@ -17,6 +17,11 @@ export default function CustomCursor() {
         const moveCursor = (e: MouseEvent) => {
             cursorX.set(e.clientX - 10); // Center the 20px cursor
             cursorY.set(e.clientY - 10);
+
+            // Force cursor none continuously to fight any system overrides
+            if (document.body.style.cursor !== 'none') {
+                document.body.style.cursor = 'none';
+            }
         };
 
         const handleMouseOver = (e: MouseEvent) => {

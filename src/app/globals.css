@@ -53,6 +53,17 @@ body {
   cursor: none !important;
 }
 
+/* Ensure cursor is hidden on the root element specifically */
+html {
+  cursor: none !important;
+}
+
+/* Catch-all for any other elements */
+html *,
+body * {
+  cursor: none !important;
+}
+
 html *,
 body * {
   cursor: none !important;
