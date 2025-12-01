@@ -31,7 +31,7 @@ export default function AudioController() {
     //     }
     // }, [isIntroComplete]);
 
-    const toggleAudio = () => {
+    const toggleAudio = async () => {
         if (!audioRef.current) return;
 
         if (fadeIntervalRef.current) {
@@ -44,16 +44,20 @@ export default function AudioController() {
 
         if (!isPlaying) {
             // Start playing (Fade In)
-            audio.play().catch(e => console.error("Audio play failed:", e));
-            setIsPlaying(true);
+            try {
+                await audio.play();
+                setIsPlaying(true);
 
-            fadeIntervalRef.current = setInterval(() => {
-                if (audio.volume < TARGET_VOLUME) {
-                    audio.volume = Math.min(audio.volume + volumeStep, TARGET_VOLUME);
-                } else {
-                    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-                }
-            }, stepTime);
+                fadeIntervalRef.current = setInterval(() => {
+                    if (audio.volume < TARGET_VOLUME) {
+                        audio.volume = Math.min(audio.volume + volumeStep, TARGET_VOLUME);
+                    } else {
+                        if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+                    }
+                }, stepTime);
+            } catch (e) {
+                console.error("Audio play failed:", e);
+            }
         } else {
             // Stop playing (Fade Out)
             setIsPlaying(false); // Update UI immediately
