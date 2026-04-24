@@ -21,10 +21,10 @@ export default function GlitchText({ text, className }: GlitchTextProps) {
         if (intervalRef.current) clearInterval(intervalRef.current);
 
         intervalRef.current = setInterval(() => {
-            setDisplayText(prev =>
+            setDisplayText(
                 text
                     .split("")
-                    .map((char, index) => {
+                    .map((_, index) => {
                         if (index < iteration) {
                             return text[index];
                         }
@@ -56,10 +56,10 @@ export default function GlitchText({ text, className }: GlitchTextProps) {
 
     return (
         <span
-            className={`${className} ${isHovered ? "font-mono" : ""}`}
+            className={[className, isHovered ? "font-mono" : ""].filter(Boolean).join(" ")}
             onMouseEnter={startGlitch}
             onMouseLeave={stopGlitch}
-            style={{ display: "inline-block", minWidth: "max-content", pointerEvents: "none" }} // Prevent layout shift
+            style={{ display: "inline-block", pointerEvents: "none" }}
         >
             {displayText}
         </span>

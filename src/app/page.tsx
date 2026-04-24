@@ -8,15 +8,28 @@ import styles from "./page.module.css";
 
 export default async function Home() {
   const games = await getGames();
+  const frameCount = games.reduce((total, game) => total + game.screenshots.length, 0);
+  const heroShots = games
+    .flatMap((game) =>
+      game.screenshots.slice(0, 2).map((shot) => ({
+        ...shot,
+        gameTitle: game.title,
+      }))
+    )
+    .slice(0, 6);
 
   return (
     <main className={styles.main}>
       <Scene3D />
 
-      <div className="z-10 w-full">
+      <div className={styles.contentLayer}>
         {/* Hero Section */}
         <section className={styles.heroSection}>
-          <HeroTitle />
+          <HeroTitle
+            shots={heroShots}
+            gameCount={games.length}
+            frameCount={frameCount}
+          />
         </section>
 
         {/* Author Block */}

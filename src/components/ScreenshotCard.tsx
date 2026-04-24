@@ -58,7 +58,7 @@ export default function ScreenshotCard({ src, alt, annotation, onClick, layoutId
             {/* Annotation */}
             <div className={styles.annotation}>
                 <p className={styles.label}>
-                    // ANNOTATION
+                    ANNOTATION
                 </p>
                 <p className={styles.text}>
                     {annotation}
@@ -67,4 +67,3 @@ export default function ScreenshotCard({ src, alt, annotation, onClick, layoutId
         </motion.div>
     );
 }
-

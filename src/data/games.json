@@ -35,17 +35,32 @@
     ]
   },
   {
+    "title": "S.T.A.L.K.E.R. 2 Heart of Chornobyl",
+    "screenshots": [
+      {
+        "id": "S.T.A.L.K.E.R. 2 Heart of Chornobyl 2026.03.24 - 11.36.02.01 копия",
+        "src": "/gallery/S.T.A.L.K.E.R. 2 Heart of Chornobyl/S.T.A.L.K.E.R. 2 Heart of Chornobyl 2026.03.24 - 11.36.02.01 копия.jpg",
+        "annotation": "The Zone tears itself apart — a gravitational anomaly rips concrete and steel into the sky like a silent apocalypse."
+      },
+      {
+        "id": "S.T.A.L.K.E.R. 2 Heart of Chornobyl 2026.03.24 - 19.11.16.00 копия",
+        "src": "/gallery/S.T.A.L.K.E.R. 2 Heart of Chornobyl/S.T.A.L.K.E.R. 2 Heart of Chornobyl 2026.03.24 - 19.11.16.00 копия.jpg",
+        "annotation": "An abandoned observatory stands defiant against the twilight — nature slowly reclaiming what science left behind."
+      },
+      {
+        "id": "S.T.A.L.K.E.R. 2 Heart of Chornobyl 2026.03.24 - 19.11.27.01 копия",
+        "src": "/gallery/S.T.A.L.K.E.R. 2 Heart of Chornobyl/S.T.A.L.K.E.R. 2 Heart of Chornobyl 2026.03.24 - 19.11.27.01 копия.jpg",
+        "annotation": "The eerie stillness of a deserted courtyard — the last light of day fades over buildings frozen in time since the evacuation."
+      }
+    ]
+  },
+  {
     "title": "The Witcher 3 Wild Hunt",
     "screenshots": [
       {
         "id": "V110",
         "src": "/gallery/The Witcher 3 Wild Hunt/V110.jpeg",
         "annotation": "Geralt's path through the war-torn No Man's Land."
-      },
-      {
-        "id": "V12",
-        "src": "/gallery/The Witcher 3 Wild Hunt/V12.jpeg",
-        "annotation": "The windswept landscapes of Velen, full of mystery and danger."
       },
       {
         "id": "V14",
@@ -61,11 +76,6 @@
         "id": "V16",
         "src": "/gallery/The Witcher 3 Wild Hunt/V16.jpeg",
         "annotation": "The dark and atmospheric mood of the Witcher's world."
-      },
-      {
-        "id": "V18",
-        "src": "/gallery/The Witcher 3 Wild Hunt/V18.jpeg",
-        "annotation": "The vibrant colors of the wilderness masking hidden threats."
       },
       {
         "id": "Ведьмак 3 Дикая Охота 2025.10.26 - 13.24.27.01-standard v2-4x",

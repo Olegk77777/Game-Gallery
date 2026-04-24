@@ -1,17 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import ScreenshotCard from "./ScreenshotCard";
 import ScrollReveal from "./ScrollReveal";
 import Image from "next/image";
 import styles from "./GameAlbum.module.css";
 import useSound from "@/hooks/useSound";
 import GlitchText from "./GlitchText";
-
-const MotionImage = motion(Image);
 
 interface Screenshot {
     id: string;
@@ -26,26 +24,84 @@ interface GameAlbumProps {
 
 export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const { playHover, playClick } = useSound();
+    const coverShot = screenshots[0];
+    const selectedShot = selectedIndex !== null ? screenshots[selectedIndex] : null;
+
+    const moveSelection = useCallback((direction: number) => {
+        setSelectedIndex((current) => {
+            if (current === null) return current;
+            return (current + direction + screenshots.length) % screenshots.length;
+        });
+    }, [screenshots.length]);
+
+    useEffect(() => {
+        if (selectedIndex === null) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setSelectedIndex(null);
+            }
+
+            if (event.key === "ArrowRight") {
+                moveSelection(1);
+            }
+
+            if (event.key === "ArrowLeft") {
+                moveSelection(-1);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [selectedIndex, moveSelection]);
 
     return (
         <section className={styles.section}>
             <ScrollReveal>
-                <motion.div
+                <motion.button
+                    type="button"
                     className={`${styles.header} cursor-hover`}
                     onClick={() => {
                         playClick();
                         setIsOpen(!isOpen);
                     }}
                     onMouseEnter={playHover}
+                    aria-expanded={isOpen}
                 >
-                    {/* Content */}
+                    {coverShot && (
+                        <div className={styles.coverImage} aria-hidden="true">
+                            <Image
+                                src={coverShot.src}
+                                alt=""
+                                fill
+                                sizes="(max-width: 768px) 100vw, 1600px"
+                                className={styles.coverPhoto}
+                            />
+                            <div className={styles.coverShade} />
+                        </div>
+                    )}
                     <div className={styles.headerContent}>
                         <div className={styles.titleWrapper}>
+                            <p className={styles.kicker}>Collection</p>
                             <h2 className={styles.title}>
                                 <GlitchText text={title} />
                             </h2>
+                            {coverShot?.annotation && (
+                                <p className={styles.coverAnnotation}>{coverShot.annotation}</p>
+                            )}
+                            <div className={styles.metaRow}>
+                                <span>{String(screenshots.length).padStart(2, "0")} frames</span>
+                                <span>21:9 photography</span>
+                            </div>
                         </div>
                         <motion.div
                             animate={{ rotate: isOpen ? 45 : 0 }}
@@ -55,7 +111,7 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
                             <Plus size={32} />
                         </motion.div>
                     </div>
-                </motion.div>
+                </motion.button>
             </ScrollReveal>
 
             <AnimatePresence>
@@ -120,13 +176,13 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
                                             visible: { opacity: 1, y: 0 }
                                         }}
                                         transition={{ duration: 0.5, ease: "easeOut" }}
-                                        className={styles.cardWrapper}
+                                        className={`${styles.cardWrapper} ${index % 5 === 0 ? styles.cardWide : ""}`}
                                     >
                                         <ScreenshotCard
                                             src={shot.src}
                                             alt={`${title} screenshot`}
                                             annotation={shot.annotation}
-                                            onClick={() => setSelectedId(shot.id)}
+                                            onClick={() => setSelectedIndex(index)}
                                             layoutId={`image-${shot.id}`}
                                         />
                                     </motion.div>
@@ -138,36 +194,107 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
             </AnimatePresence>
 
             <AnimatePresence>
-                {selectedId && (
+                {selectedShot && selectedIndex !== null && (
                     <>
                         {typeof document !== 'undefined' && createPortal(
-                            <div className={styles.lightbox} onClick={() => {
-                                playClick();
-                                setSelectedId(null);
-                            }}>
-                                <motion.div
-                                    className={styles.backdrop}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                />
-                                <div className={styles.lightboxContent}>
-                                    {screenshots.map(shot => shot.id === selectedId && (
-                                        <div key={shot.id} className={styles.expandedImageWrapper}>
-                                            <MotionImage
-                                                layoutId={`image-${shot.id}`}
-                                                src={shot.src}
-                                                alt="Fullscreen view"
-                                                width={3440}
-                                                height={1440}
-                                                sizes="95vw"
-                                                className={styles.expandedImage}
-                                                transition={{
-                                                    duration: 1.2,
-                                                    ease: [0.19, 1, 0.22, 1]
-                                                }}
-                                            />
+                            <motion.div
+                                className={styles.lightbox}
+                                onClick={() => {
+                                    playClick();
+                                    setSelectedIndex(null);
+                                }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.25 }}
+                            >
+                                <div className={styles.backdrop}>
+                                    <Image
+                                        src={selectedShot.src}
+                                        alt=""
+                                        fill
+                                        sizes="100vw"
+                                        className={styles.backdropImage}
+                                    />
+                                </div>
+
+                                <motion.button
+                                    type="button"
+                                    className={`${styles.lightboxCloseButton} cursor-hover`}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        playClick();
+                                        setSelectedIndex(null);
+                                    }}
+                                    whileHover={{ scale: 1.08 }}
+                                    whileTap={{ scale: 0.94 }}
+                                    aria-label="Close image"
+                                >
+                                    <X size={22} />
+                                </motion.button>
+
+                                {screenshots.length > 1 && (
+                                    <>
+                                        <motion.button
+                                            type="button"
+                                            className={`${styles.navButton} ${styles.navPrevious} cursor-hover`}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                playClick();
+                                                moveSelection(-1);
+                                            }}
+                                            onMouseEnter={playHover}
+                                            whileHover={{ x: -4 }}
+                                            whileTap={{ scale: 0.94 }}
+                                            aria-label="Previous image"
+                                        >
+                                            <ChevronLeft size={30} />
+                                        </motion.button>
+                                        <motion.button
+                                            type="button"
+                                            className={`${styles.navButton} ${styles.navNext} cursor-hover`}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                playClick();
+                                                moveSelection(1);
+                                            }}
+                                            onMouseEnter={playHover}
+                                            whileHover={{ x: 4 }}
+                                            whileTap={{ scale: 0.94 }}
+                                            aria-label="Next image"
+                                        >
+                                            <ChevronRight size={30} />
+                                        </motion.button>
+                                    </>
+                                )}
+
+                                <div
+                                    className={styles.lightboxContent}
+                                    onClick={(event) => event.stopPropagation()}
+                                >
+                                    <div className={styles.lightboxHeader}>
+                                        <span>{title}</span>
+                                        <span>{String(selectedIndex + 1).padStart(2, "0")} / {String(screenshots.length).padStart(2, "0")}</span>
+                                    </div>
+
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={selectedShot.id}
+                                            className={styles.expandedImageWrapper}
+                                            initial={{ opacity: 0, y: 24, scale: 0.98 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -18, scale: 0.985 }}
+                                            transition={{ duration: 0.45, ease: [0.19, 1, 0.22, 1] }}
+                                        >
+                                            <div className={styles.expandedImageFrame}>
+                                                <Image
+                                                    src={selectedShot.src}
+                                                    alt={`${title} fullscreen view`}
+                                                    fill
+                                                    sizes="92vw"
+                                                    className={styles.expandedImage}
+                                                />
+                                            </div>
                                             <motion.div
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
@@ -175,12 +302,12 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
                                                 transition={{ delay: 0.2, duration: 0.3 }}
                                                 className={styles.expandedAnnotation}
                                             >
-                                                {shot.annotation}
+                                                {selectedShot.annotation}
                                             </motion.div>
-                                        </div>
-                                    ))}
+                                        </motion.div>
+                                    </AnimatePresence>
                                 </div>
-                            </div>,
+                            </motion.div>,
                             document.body
                         )}
                     </>

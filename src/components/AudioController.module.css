@@ -14,7 +14,7 @@
     color: rgba(255, 255, 255, 0.6);
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    letter-spacing: 0.05em;
+    letter-spacing: 0;
     cursor: none !important;
     padding: 0.5rem;
     transition: all 0.3s ease;
