@@ -19,11 +19,40 @@ interface HeroTitleProps {
     frameCount: number;
 }
 
+function createShuffledOrder(length: number, avoidFirstIndex?: number) {
+    const order = Array.from({ length }, (_, index) => index);
+
+    for (let index = order.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [order[index], order[swapIndex]] = [order[swapIndex], order[index]];
+    }
+
+    if (avoidFirstIndex !== undefined && order.length > 1 && order[0] === avoidFirstIndex) {
+        [order[0], order[1]] = [order[1], order[0]];
+    }
+
+    return order;
+}
+
 export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitleProps) {
     const { isIntroComplete } = useIntro();
     const [activeIndex, setActiveIndex] = useState(0);
-    const activeShot = shots[activeIndex];
-    const progress = shots.length > 0 ? `${((activeIndex + 1) / shots.length) * 100}%` : "0%";
+    const [shotOrder, setShotOrder] = useState<number[]>([]);
+    const orderedShots = shotOrder.length === shots.length
+        ? shotOrder.map((shotIndex) => shots[shotIndex])
+        : shots;
+    const activeShot = orderedShots[activeIndex];
+    const progress = orderedShots.length > 0 ? `${((activeIndex + 1) / orderedShots.length) * 100}%` : "0%";
+    const deckItems = Array.from(
+        { length: Math.min(6, orderedShots.length) },
+        (_, slot) => {
+            const orderedIndex = (activeIndex + slot) % orderedShots.length;
+            return {
+                orderedIndex,
+                shot: orderedShots[orderedIndex],
+            };
+        }
+    );
 
     const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
         const rect = event.currentTarget.getBoundingClientRect();
@@ -40,11 +69,27 @@ export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitlePro
     };
 
     useEffect(() => {
+        setActiveIndex(0);
+        setShotOrder(createShuffledOrder(shots.length));
+    }, [shots.length]);
+
+    useEffect(() => {
         if (!isIntroComplete || shots.length <= 1) return;
 
         const timer = window.setInterval(() => {
-            setActiveIndex((current) => (current + 1) % shots.length);
-        }, 6500);
+            setActiveIndex((current) => {
+                const next = current + 1;
+
+                if (next < shots.length) {
+                    return next;
+                }
+
+                setShotOrder((currentOrder) =>
+                    createShuffledOrder(shots.length, currentOrder[current])
+                );
+                return 0;
+            });
+        }, 5600);
 
         return () => window.clearInterval(timer);
     }, [isIntroComplete, shots.length]);
@@ -99,7 +144,7 @@ export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitlePro
                 >
                     <span>Frame operating system</span>
                     <span>Live curation</span>
-                    <span>{String(activeIndex + 1).padStart(2, "0")} / {String(shots.length).padStart(2, "0")}</span>
+                    <span>{String(activeIndex + 1).padStart(2, "0")} / {String(orderedShots.length).padStart(2, "0")}</span>
                 </motion.div>
 
                 <motion.p
@@ -159,7 +204,7 @@ export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitlePro
                 </motion.div>
             </motion.div>
 
-            {shots.length > 0 && (
+            {deckItems.length > 0 && (
                 <motion.div
                     className={styles.heroDeck}
                     initial={{ opacity: 0, x: 24 }}
@@ -167,13 +212,13 @@ export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitlePro
                     transition={{ duration: 1, delay: 1.15 }}
                     aria-label="Featured frames"
                 >
-                    {shots.map((shot, index) => (
+                    {deckItems.map(({ shot, orderedIndex }) => (
                         <button
                             key={shot.id}
                             type="button"
-                            className={`${styles.heroThumb} ${index === activeIndex ? styles.heroThumbActive : ""}`}
-                            onClick={() => setActiveIndex(index)}
-                            aria-label={`Show frame ${index + 1}: ${shot.gameTitle}`}
+                            className={`${styles.heroThumb} ${orderedIndex === activeIndex ? styles.heroThumbActive : ""}`}
+                            onClick={() => setActiveIndex(orderedIndex)}
+                            aria-label={`Show frame ${orderedIndex + 1}: ${shot.gameTitle}`}
                         >
                             <Image
                                 src={shot.src}
@@ -182,7 +227,7 @@ export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitlePro
                                 sizes="96px"
                                 className={styles.heroThumbImage}
                             />
-                            <span>{String(index + 1).padStart(2, "0")}</span>
+                            <span>{String(orderedIndex + 1).padStart(2, "0")}</span>
                         </button>
                     ))}
                 </motion.div>

@@ -43,7 +43,7 @@ function seededValue(index: number, salt: number) {
     return value - Math.floor(value);
 }
 
-function LuminanceField({ count = 900 }) {
+function LuminanceField({ count = 420 }) {
     const points = useRef<THREE.Points>(null);
     const material = useRef<THREE.ShaderMaterial>(null);
     const uniforms = useMemo(
@@ -119,8 +119,8 @@ export default function Scene3D() {
         >
             <Canvas
                 camera={{ position: [0, 0, 32], fov: 72 }}
-                dpr={[1, 1.5]}
-                gl={{ antialias: true, alpha: true }}
+                dpr={[1, 1.15]}
+                gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
             >
                 <color attach="background" args={["#050505"]} />
                 <LuminanceField />

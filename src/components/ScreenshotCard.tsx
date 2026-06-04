@@ -1,8 +1,8 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import styles from "./ScreenshotCard.module.css";
 import useSound from "@/hooks/useSound";
+
 const MotionImage = motion(Image);
 
 interface ScreenshotCardProps {
@@ -15,17 +15,9 @@ interface ScreenshotCardProps {
 
 export default function ScreenshotCard({ src, alt, annotation, onClick, layoutId }: ScreenshotCardProps) {
     const { playHover, playClick } = useSound();
-    const ref = useRef<HTMLDivElement>(null);
-    const { scrollYProgress } = useScroll({
-        target: ref,
-        offset: ["start end", "end start"]
-    });
-
-    const y = useTransform(scrollYProgress, [0, 1], ["-10%", "10%"]);
 
     return (
         <motion.div
-            ref={ref}
             className={`${styles.container} cursor-hover`}
             onClick={() => {
                 playClick();
@@ -39,15 +31,15 @@ export default function ScreenshotCard({ src, alt, annotation, onClick, layoutId
             <div className={styles.imageWrapper}>
                 <MotionImage
                     layoutId={layoutId}
-                    style={{ y, scale: 1.15 }}
                     src={src}
                     alt={alt}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className={styles.image}
+                    loading="lazy"
                     transition={{
                         duration: 0.8,
-                        ease: [0.4, 0, 0.2, 1] // Faster but still smooth ease-in-out
+                        ease: [0.4, 0, 0.2, 1]
                     }}
                 />
 

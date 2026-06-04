@@ -11,12 +11,12 @@ export default async function Home() {
   const frameCount = games.reduce((total, game) => total + game.screenshots.length, 0);
   const heroShots = games
     .flatMap((game) =>
-      game.screenshots.slice(0, 2).map((shot) => ({
+      game.screenshots.map((shot) => ({
         ...shot,
+        id: `${game.title}-${shot.id}`,
         gameTitle: game.title,
       }))
-    )
-    .slice(0, 6);
+    );
 
   return (
     <main className={styles.main}>

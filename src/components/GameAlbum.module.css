@@ -362,9 +362,9 @@
 
 .backdropImage {
     object-fit: cover;
-    filter: blur(38px) saturate(1.24) brightness(0.38);
-    transform: scale(1.12);
-    opacity: 0.64;
+    filter: blur(24px) saturate(1.12) brightness(0.34);
+    transform: scale(1.08);
+    opacity: 0.46;
 }
 
 .lightboxContent {
@@ -414,6 +414,7 @@
 
 .expandedImageWrapper {
     position: relative;
+    z-index: 2;
     width: 100%;
     min-height: 0;
     display: flex;
@@ -475,6 +476,7 @@
     position: absolute;
     left: 50%;
     bottom: 0;
+    z-index: 3;
     width: min(100%, 820px);
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(4.7rem, 1fr));
@@ -488,6 +490,17 @@
     backdrop-filter: blur(18px);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     transform: translateX(-50%);
+    transition:
+        opacity 0.42s cubic-bezier(0.19, 1, 0.22, 1),
+        filter 0.42s cubic-bezier(0.19, 1, 0.22, 1),
+        transform 0.42s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.expandedImageWrapper:hover+.filmstrip {
+    opacity: 0.18;
+    filter: blur(5px) saturate(0.75);
+    pointer-events: none;
+    transform: translateX(-50%) translateY(46%) scale(0.92);
 }
 
 .filmstripItem {
