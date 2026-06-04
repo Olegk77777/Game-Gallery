@@ -39,7 +39,11 @@ export default async function Home() {
         <div className={styles.albumsContainer}>
           {games.map((game, index) => (
             <ScrollReveal key={game.title} delay={index * 0.1}>
-              <GameAlbum title={game.title} screenshots={game.screenshots} />
+              <GameAlbum
+                title={game.title}
+                screenshots={game.screenshots}
+                index={index}
+              />
             </ScrollReveal>
           ))}
         </div>

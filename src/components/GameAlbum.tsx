@@ -20,9 +20,10 @@ interface Screenshot {
 interface GameAlbumProps {
     title: string;
     screenshots: Screenshot[];
+    index: number;
 }
 
-export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
+export default function GameAlbum({ title, screenshots, index }: GameAlbumProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const { playHover, playClick } = useSound();
@@ -77,6 +78,10 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
                     onMouseEnter={playHover}
                     aria-expanded={isOpen}
                 >
+                    <div className={styles.frameLines} aria-hidden="true" />
+                    <div className={styles.albumIndex} aria-hidden="true">
+                        {String(index + 1).padStart(2, "0")}
+                    </div>
                     {coverShot && (
                         <div className={styles.coverImage} aria-hidden="true">
                             <Image
@@ -91,7 +96,11 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
                     )}
                     <div className={styles.headerContent}>
                         <div className={styles.titleWrapper}>
-                            <p className={styles.kicker}>Collection</p>
+                            <div className={styles.collectionSignal}>
+                                <span>{isOpen ? "Expanded system" : "Collection ready"}</span>
+                                <i />
+                            </div>
+                            <p className={styles.kicker}>Collection / {String(index + 1).padStart(2, "0")}</p>
                             <h2 className={styles.title}>
                                 <GlitchText text={title} />
                             </h2>
@@ -103,13 +112,16 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
                                 <span>21:9 photography</span>
                             </div>
                         </div>
-                        <motion.div
-                            animate={{ rotate: isOpen ? 45 : 0 }}
-                            transition={{ duration: 0.3 }}
-                            className={styles.iconWrapper}
-                        >
-                            <Plus size={32} />
-                        </motion.div>
+                        <div className={styles.actionCluster}>
+                            <span>{isOpen ? "Close frame" : "Open frames"}</span>
+                            <motion.div
+                                animate={{ rotate: isOpen ? 45 : 0 }}
+                                transition={{ duration: 0.3 }}
+                                className={styles.iconWrapper}
+                            >
+                                <Plus size={32} />
+                            </motion.div>
+                        </div>
                     </div>
                 </motion.button>
             </ScrollReveal>
@@ -117,27 +129,6 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
             <AnimatePresence>
                 {isOpen && (
                     <>
-                        {/* Floating Close Button - rendered in Portal to escape transform context */}
-                        {typeof document !== 'undefined' && createPortal(
-                            <motion.button
-                                className={styles.floatingCloseButton}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    playClick();
-                                    setIsOpen(false);
-                                }}
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <X size={24} />
-                            </motion.button>,
-                            document.body
-                        )}
-
                         <motion.div
                             initial="hidden"
                             animate="visible"
@@ -272,9 +263,14 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
                                     className={styles.lightboxContent}
                                     onClick={(event) => event.stopPropagation()}
                                 >
-                                    <div className={styles.lightboxHeader}>
-                                        <span>{title}</span>
-                                        <span>{String(selectedIndex + 1).padStart(2, "0")} / {String(screenshots.length).padStart(2, "0")}</span>
+                                    <div className={styles.lightboxChrome}>
+                                        <div className={styles.lightboxHeader}>
+                                            <span>{title}</span>
+                                            <span>{String(selectedIndex + 1).padStart(2, "0")} / {String(screenshots.length).padStart(2, "0")}</span>
+                                        </div>
+                                        <div className={styles.lightboxProgress} aria-hidden="true">
+                                            <span style={{ width: `${((selectedIndex + 1) / screenshots.length) * 100}%` }} />
+                                        </div>
                                     </div>
 
                                     <AnimatePresence mode="wait">
@@ -306,6 +302,31 @@ export default function GameAlbum({ title, screenshots }: GameAlbumProps) {
                                             </motion.div>
                                         </motion.div>
                                     </AnimatePresence>
+
+                                    <div className={styles.filmstrip} aria-label="Image timeline">
+                                        {screenshots.map((shot, index) => (
+                                            <button
+                                                key={shot.id}
+                                                type="button"
+                                                className={`${styles.filmstripItem} ${index === selectedIndex ? styles.filmstripItemActive : ""}`}
+                                                onClick={() => {
+                                                    playClick();
+                                                    setSelectedIndex(index);
+                                                }}
+                                                onMouseEnter={playHover}
+                                                aria-label={`Open image ${index + 1}`}
+                                            >
+                                                <Image
+                                                    src={shot.src}
+                                                    alt=""
+                                                    fill
+                                                    sizes="96px"
+                                                    className={styles.filmstripImage}
+                                                />
+                                                <span>{String(index + 1).padStart(2, "0")}</span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </motion.div>,
                             document.body

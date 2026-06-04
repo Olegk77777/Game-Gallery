@@ -1,71 +1,130 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useRef, useMemo } from "react";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
-function Particles({ count = 200 }) {
-    const mesh = useRef<THREE.InstancedMesh>(null);
-    const light = useRef<THREE.PointLight>(null);
+const vertexShader = `
+attribute float aSeed;
+uniform float uTime;
+uniform vec2 uPointer;
+varying float vAlpha;
 
-    const particles = useMemo(() => {
-        const temp = [];
-        for (let i = 0; i < count; i++) {
-            const t = Math.random() * 100;
-            const factor = 20 + Math.random() * 100;
-            const speed = 0.001 + Math.random() / 500;
-            const xFactor = -50 + Math.random() * 100;
-            const yFactor = -50 + Math.random() * 100;
-            const zFactor = -50 + Math.random() * 100;
-            temp.push({ t, factor, speed, xFactor, yFactor, zFactor, mx: 0, my: 0 });
+void main() {
+    vec3 p = position;
+    float wave = sin(uTime * 0.42 + aSeed * 6.283 + p.x * 0.035) * 1.15;
+
+    p.x += cos(uTime * 0.22 + aSeed * 10.0) * 0.82 + uPointer.x * 2.4;
+    p.y += wave + uPointer.y * 1.8;
+    p.z += sin(uTime * 0.18 + aSeed * 12.0) * 1.2;
+
+    vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
+    gl_PointSize = (2.2 + sin(aSeed * 20.0 + uTime) * 1.25) * (42.0 / -mvPosition.z);
+    gl_Position = projectionMatrix * mvPosition;
+
+    vAlpha = smoothstep(-44.0, 18.0, p.z) * (0.34 + aSeed * 0.26);
+}
+`;
+
+const fragmentShader = `
+varying float vAlpha;
+
+void main() {
+    float distanceToCenter = length(gl_PointCoord - 0.5);
+    float core = smoothstep(0.5, 0.05, distanceToCenter);
+    vec3 color = mix(vec3(0.42, 0.48, 0.58), vec3(0.96, 0.92, 0.82), core);
+
+    gl_FragColor = vec4(color, core * vAlpha);
+}
+`;
+
+function seededValue(index: number, salt: number) {
+    const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
+    return value - Math.floor(value);
+}
+
+function LuminanceField({ count = 900 }) {
+    const points = useRef<THREE.Points>(null);
+    const material = useRef<THREE.ShaderMaterial>(null);
+    const uniforms = useMemo(
+        () => ({
+            uTime: { value: 0 },
+            uPointer: { value: new THREE.Vector2(0, 0) },
+        }),
+        []
+    );
+
+    const geometry = useMemo(() => {
+        const positions = new Float32Array(count * 3);
+        const seeds = new Float32Array(count);
+
+        for (let i = 0; i < count; i += 1) {
+            const radius = 18 + seededValue(i, 0.12) * 42;
+            const angle = seededValue(i, 0.34) * Math.PI * 2;
+            const layer = (seededValue(i, 0.56) - 0.5) * 42;
+
+            positions[i * 3] = Math.cos(angle) * radius + (seededValue(i, 0.78) - 0.5) * 18;
+            positions[i * 3 + 1] = Math.sin(angle) * radius * 0.46 + (seededValue(i, 0.91) - 0.5) * 16;
+            positions[i * 3 + 2] = layer;
+            seeds[i] = seededValue(i, 1.13);
         }
-        return temp;
+
+        return { positions, seeds };
     }, [count]);
 
-    const dummy = useMemo(() => new THREE.Object3D(), []);
+    useFrame(({ clock, pointer }) => {
+        if (material.current) {
+            material.current.uniforms.uTime.value = clock.elapsedTime;
+            material.current.uniforms.uPointer.value.lerp(pointer, 0.035);
+        }
 
-    useFrame((state) => {
-        if (!mesh.current) return;
-
-        particles.forEach((particle, i) => {
-            let { t, factor, speed, xFactor, yFactor, zFactor } = particle;
-            t = particle.t += speed / 2;
-            const a = Math.cos(t) + Math.sin(t * 1) / 10;
-            const b = Math.sin(t) + Math.cos(t * 2) / 10;
-            const s = Math.cos(t);
-
-            dummy.position.set(
-                (particle.mx / 10) * a + xFactor + Math.cos((t / 10) * factor) + (Math.sin(t * 1) * factor) / 10,
-                (particle.my / 10) * b + yFactor + Math.sin((t / 10) * factor) + (Math.cos(t * 2) * factor) / 10,
-                (particle.my / 10) * b + zFactor + Math.cos((t / 10) * factor) + (Math.sin(t * 3) * factor) / 10
-            );
-            dummy.scale.set(s, s, s);
-            dummy.rotation.set(s * 5, s * 5, s * 5);
-            dummy.updateMatrix();
-
-            mesh.current!.setMatrixAt(i, dummy.matrix);
-        });
-        mesh.current.instanceMatrix.needsUpdate = true;
+        if (points.current) {
+            points.current.rotation.y = Math.sin(clock.elapsedTime * 0.08) * 0.08;
+            points.current.rotation.x = Math.cos(clock.elapsedTime * 0.06) * 0.045;
+        }
     });
 
     return (
-        <>
-            <instancedMesh ref={mesh} args={[undefined, undefined, count]}>
-                <dodecahedronGeometry args={[0.2, 0]} />
-                <meshPhongMaterial color="#c0c0c0" emissive="#000000" specular="#ffffff" shininess={100} />
-            </instancedMesh>
-        </>
+        <points ref={points}>
+            <bufferGeometry>
+                <bufferAttribute attach="attributes-position" args={[geometry.positions, 3]} />
+                <bufferAttribute attach="attributes-aSeed" args={[geometry.seeds, 1]} />
+            </bufferGeometry>
+            <shaderMaterial
+                ref={material}
+                uniforms={uniforms}
+                vertexShader={vertexShader}
+                fragmentShader={fragmentShader}
+                transparent
+                depthWrite={false}
+                blending={THREE.AdditiveBlending}
+            />
+        </points>
     );
 }
 
 export default function Scene3D() {
     return (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: -1, pointerEvents: "none" }}>
-            <Canvas camera={{ position: [0, 0, 30], fov: 75 }}>
-                <ambientLight intensity={0.5} />
-                <pointLight position={[10, 10, 10]} intensity={1} />
-                <Particles />
-                <fog attach="fog" args={["#050505", 10, 50]} />
+        <div
+            aria-hidden="true"
+            style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                zIndex: -1,
+                pointerEvents: "none",
+            }}
+        >
+            <Canvas
+                camera={{ position: [0, 0, 32], fov: 72 }}
+                dpr={[1, 1.5]}
+                gl={{ antialias: true, alpha: true }}
+            >
+                <color attach="background" args={["#050505"]} />
+                <LuminanceField />
+                <fog attach="fog" args={["#050505", 24, 62]} />
             </Canvas>
         </div>
     );

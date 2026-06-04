@@ -13,6 +13,7 @@ const AuthorBlock: React.FC = () => {
             animate={{ opacity: 0.8, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
         >
+            <div className={styles.rule} aria-hidden="true" />
             <div className={styles.avatarWrapper}>
                 <Image
                     src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/assets/author.jpg`}
@@ -22,8 +23,13 @@ const AuthorBlock: React.FC = () => {
                 />
             </div>
             <div className={styles.content}>
+                <p className={styles.eyebrow}>Creative direction</p>
                 <h3 className={styles.name}>Oleg Krugliak</h3>
                 <p className={styles.role}>Curator & Designer</p>
+            </div>
+            <div className={styles.signatureMeta}>
+                <span>Archive in motion</span>
+                <span>2026</span>
             </div>
         </motion.div>
     );

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIntro } from "./IntroContext";
+import styles from "./Preloader.module.css";
 
 export default function Preloader() {
     const { setIntroComplete } = useIntro();
@@ -10,10 +11,6 @@ export default function Preloader() {
     const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {
-        // Lock scroll
-        document.body.style.overflow = "hidden";
-
-        // Lock scroll
         document.body.style.overflow = "hidden";
 
         // Audio removed as per user request
@@ -22,7 +19,7 @@ export default function Preloader() {
 
         // Simulation Logic
         let currentProgress = 0;
-        let startTime = Date.now();
+        const startTime = Date.now();
 
         // Timeline:
         // 0-1s: Fast to 30%
@@ -77,24 +74,26 @@ export default function Preloader() {
                 <motion.div
                     initial={{ y: 0 }}
                     exit={{ y: "-100%", transition: { duration: 0.8, ease: [0.19, 1, 0.22, 1] } }}
-                    style={{
-                        position: "fixed",
-                        inset: 0,
-                        zIndex: 99999,
-                        backgroundColor: "#000",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#fff",
-                    }}
+                    className={styles.overlay}
                 >
-                    <div style={{
-                        fontFamily: "var(--font-serif)",
-                        fontSize: "15vw",
-                        fontWeight: "bold",
-                        fontVariantNumeric: "tabular-nums"
-                    }}>
-                        {progress}%
+                    <div className={styles.inner}>
+                        <div className={styles.header}>
+                            <span>Game Gallery</span>
+                            <span>Frame system boot</span>
+                        </div>
+                        <div className={styles.percent}>
+                            {String(progress).padStart(3, "0")}%
+                        </div>
+                        <div className={styles.meter} aria-hidden="true">
+                            <motion.span
+                                style={{ width: `${progress}%` }}
+                                transition={{ duration: 0.2, ease: "easeOut" }}
+                            />
+                        </div>
+                        <div className={styles.footer}>
+                            <span>Curating worlds</span>
+                            <span>21:9 archive</span>
+                        </div>
                     </div>
                 </motion.div>
             )}

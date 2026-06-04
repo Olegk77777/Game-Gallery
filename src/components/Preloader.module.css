@@ -1,0 +1,78 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(245, 239, 226, 0.13), transparent 18rem),
+        linear-gradient(135deg, #050505, #000);
+    overflow: hidden;
+}
+
+.overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 5rem 5rem;
+    mask-image: radial-gradient(circle at center, #000, transparent 70%);
+    opacity: 0.16;
+}
+
+.inner {
+    position: relative;
+    width: min(calc(100% - 2rem), 620px);
+    padding: 1.2rem;
+}
+
+.header,
+.footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: rgba(255, 255, 255, 0.56);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+}
+
+.percent {
+    margin: 2.4rem 0 1.25rem;
+    color: #f4f1ea;
+    font-family: var(--font-serif);
+    font-size: 5.2rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 0.9;
+    text-shadow: 0 22px 90px rgba(245, 239, 226, 0.2);
+}
+
+.meter {
+    position: relative;
+    height: 1px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.meter span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: linear-gradient(90deg, #f5efe2, rgba(255, 255, 255, 0.36));
+    box-shadow: 0 0 18px rgba(245, 239, 226, 0.36);
+}
+
+@media (max-width: 760px) {
+    .header,
+    .footer {
+        font-size: 0.58rem;
+    }
+
+    .percent {
+        font-size: 3.6rem;
+    }
+}
