@@ -83,8 +83,8 @@
   border-radius: 8px;
   background: transparent;
   box-shadow: none;
+  opacity: var(--tile-opacity, 1);
   transform-origin: center;
-  will-change: transform, opacity;
   transition:
     border-color 0.35s ease,
     box-shadow 0.35s ease,
@@ -130,7 +130,7 @@
   z-index: 5;
   width: 20rem;
   aspect-ratio: 21 / 9;
-  opacity: 0.72;
+  --tile-opacity: 0.72;
 }
 
 .heroCollageTile3 {
@@ -139,7 +139,7 @@
   z-index: 6;
   width: 24rem;
   aspect-ratio: 21 / 9;
-  opacity: 0.86;
+  --tile-opacity: 0.86;
 }
 
 .heroCollageTile4 {
@@ -148,7 +148,7 @@
   z-index: 4;
   width: 18rem;
   aspect-ratio: 21 / 9;
-  opacity: 0.62;
+  --tile-opacity: 0.62;
 }
 
 .heroCollageTile5 {
@@ -157,7 +157,7 @@
   z-index: 8;
   width: 15rem;
   aspect-ratio: 21 / 9;
-  opacity: 0.78;
+  --tile-opacity: 0.78;
 }
 
 .heroCollageTile6 {
@@ -166,7 +166,7 @@
   z-index: 3;
   width: 14rem;
   aspect-ratio: 21 / 9;
-  opacity: 0.54;
+  --tile-opacity: 0.54;
 }
 
 .heroCollageTile7 {
@@ -175,7 +175,13 @@
   z-index: 2;
   width: 12rem;
   aspect-ratio: 21 / 9;
-  opacity: 0.44;
+  --tile-opacity: 0.44;
+}
+
+.heroCollageImageLayer {
+  position: absolute;
+  inset: 0;
+  will-change: opacity;
 }
 
 .heroCollageImage {
