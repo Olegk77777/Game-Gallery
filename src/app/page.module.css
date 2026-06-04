@@ -275,6 +275,122 @@
   }
 }
 
+@media (min-width: 1800px) and (min-aspect-ratio: 2 / 1) {
+  .heroSection,
+  .titleWrapper {
+    min-height: 88svh;
+  }
+
+  .titleWrapper {
+    padding: 8rem clamp(5rem, 5.5vw, 10rem) 7rem;
+  }
+
+  .heroContent {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .heroBrandKicker {
+    font-size: clamp(0.82rem, 0.48vw, 1rem);
+  }
+
+  .heroSiteTitle {
+    width: min(42vw, 58rem);
+    font-size: clamp(9rem, 7vw, 15rem);
+  }
+
+  .heroSiteSubtitle {
+    width: min(34vw, 44rem);
+    font-size: clamp(1rem, 0.62vw, 1.22rem);
+  }
+
+  .heroCollage {
+    inset: clamp(4.5rem, 5vw, 7rem) clamp(5rem, 6vw, 11rem) clamp(4rem, 5vw, 7rem) clamp(42rem, 39vw, 60rem);
+  }
+
+  .heroCollageTile1 {
+    top: clamp(4.8rem, 8vh, 8rem);
+    right: clamp(6rem, 11vw, 18rem);
+    width: clamp(44rem, 34vw, 76rem);
+  }
+
+  .heroCollageTile2 {
+    top: clamp(0.4rem, 3vh, 3rem);
+    right: clamp(25rem, 26vw, 44rem);
+    width: clamp(21rem, 17vw, 36rem);
+  }
+
+  .heroCollageTile3 {
+    right: clamp(2rem, 6vw, 10rem);
+    bottom: clamp(1rem, 7vh, 6rem);
+    width: clamp(25rem, 19vw, 42rem);
+  }
+
+  .heroCollageTile4 {
+    right: clamp(28rem, 28vw, 48rem);
+    bottom: clamp(-1rem, 1.8vh, 2rem);
+    width: clamp(19rem, 15vw, 32rem);
+  }
+
+  .heroCollageTile5 {
+    top: clamp(20rem, 31vh, 30rem);
+    right: clamp(17rem, 17vw, 32rem);
+    width: clamp(16rem, 13vw, 27rem);
+  }
+}
+
+@media (min-width: 3000px) and (min-aspect-ratio: 2 / 1) {
+  .heroSection,
+  .titleWrapper {
+    min-height: 92svh;
+  }
+
+  .titleWrapper {
+    padding: 8rem clamp(9rem, 6vw, 14rem) 7rem;
+  }
+
+  .heroSiteTitle {
+    width: min(45vw, 76rem);
+    font-size: clamp(12rem, 8vw, 18rem);
+  }
+
+  .heroSiteSubtitle {
+    width: min(40vw, 54rem);
+    font-size: clamp(1.12rem, 0.68vw, 1.34rem);
+  }
+
+  .heroCollageTile1 {
+    top: clamp(5rem, 8vh, 8rem);
+    right: 10vw;
+    width: 36vw;
+  }
+
+  .heroCollageTile2 {
+    top: clamp(0.5rem, 4vh, 4rem);
+    right: 33vw;
+    width: 18vw;
+  }
+
+  .heroCollageTile3 {
+    right: 5vw;
+    bottom: clamp(3rem, 8vh, 8rem);
+    width: 22vw;
+  }
+
+  .heroCollageTile4 {
+    right: 28vw;
+    bottom: clamp(-1rem, 2vh, 2rem);
+    width: 15vw;
+  }
+
+  .heroCollageTile5 {
+    top: clamp(23rem, 34vh, 34rem);
+    right: 20vw;
+    width: 13vw;
+  }
+}
+
 @media (max-width: 1100px) {
   .heroCollageTile1 {
     right: 1rem;
