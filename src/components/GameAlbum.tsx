@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
@@ -23,12 +24,40 @@ interface GameAlbumProps {
     index: number;
 }
 
+function getWrappedOffset(index: number, selectedIndex: number, total: number) {
+    const directOffset = index - selectedIndex;
+
+    if (directOffset > total / 2) {
+        return directOffset - total;
+    }
+
+    if (directOffset < -total / 2) {
+        return directOffset + total;
+    }
+
+    return directOffset;
+}
+
 export default function GameAlbum({ title, screenshots, index }: GameAlbumProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const { playHover, playClick } = useSound();
     const coverShot = screenshots[0];
     const selectedShot = selectedIndex !== null ? screenshots[selectedIndex] : null;
+    const filmstripItems = selectedIndex === null
+        ? []
+        : screenshots
+            .map((shot, shotIndex) => {
+                const offset = getWrappedOffset(shotIndex, selectedIndex, screenshots.length);
+
+                return {
+                    shot,
+                    shotIndex,
+                    offset,
+                    absOffset: Math.abs(offset),
+                };
+            })
+            .sort((left, right) => left.offset - right.offset);
 
     const moveSelection = useCallback((direction: number) => {
         setSelectedIndex((current) => {
@@ -72,8 +101,8 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                     type="button"
                     className={`${styles.header} cursor-hover`}
                     onClick={() => {
-                        playClick();
                         setIsOpen(!isOpen);
+                        playClick();
                     }}
                     onMouseEnter={playHover}
                     aria-expanded={isOpen}
@@ -129,18 +158,18 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
             <AnimatePresence>
                 {isOpen && (
                     <>
-                        <motion.div
-                            initial="hidden"
-                            animate="visible"
-                            exit="hidden"
-                            variants={{
-                                hidden: { opacity: 0, height: 0 },
-                                visible: {
-                                    opacity: 1,
-                                    height: "auto",
-                                    transition: {
-                                        duration: 0.5,
-                                        staggerChildren: 0.1
+	                        <motion.div
+	                            initial="hidden"
+	                            animate="visible"
+	                            exit="hidden"
+	                            variants={{
+	                                hidden: { opacity: 0, y: 24 },
+	                                visible: {
+	                                    opacity: 1,
+                                        y: 0,
+	                                    transition: {
+	                                        duration: 0.5,
+	                                        staggerChildren: 0.1
                                     }
                                 }
                             }}
@@ -188,34 +217,26 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                 {selectedShot && selectedIndex !== null && (
                     <>
                         {typeof document !== 'undefined' && createPortal(
-                            <motion.div
-                                className={styles.lightbox}
+	                            <motion.div
+	                                className={styles.lightbox}
                                 onClick={() => {
-                                    playClick();
                                     setSelectedIndex(null);
+                                    playClick();
                                 }}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 transition={{ duration: 0.25 }}
                             >
-                                <div className={styles.backdrop}>
-                                    <Image
-                                        src={selectedShot.src}
-                                        alt=""
-                                        fill
-                                        sizes="100vw"
-                                        className={styles.backdropImage}
-                                    />
-                                </div>
+                                <div className={styles.backdrop} />
 
                                 <motion.button
                                     type="button"
                                     className={`${styles.lightboxCloseButton} cursor-hover`}
                                     onClick={(event) => {
                                         event.stopPropagation();
-                                        playClick();
                                         setSelectedIndex(null);
+                                        playClick();
                                     }}
                                     whileHover={{ scale: 1.08 }}
                                     whileTap={{ scale: 0.94 }}
@@ -231,8 +252,8 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                                             className={`${styles.navButton} ${styles.navPrevious} cursor-hover`}
                                             onClick={(event) => {
                                                 event.stopPropagation();
-                                                playClick();
                                                 moveSelection(-1);
+                                                playClick();
                                             }}
                                             onMouseEnter={playHover}
                                             whileHover={{ x: -4 }}
@@ -246,8 +267,8 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                                             className={`${styles.navButton} ${styles.navNext} cursor-hover`}
                                             onClick={(event) => {
                                                 event.stopPropagation();
-                                                playClick();
                                                 moveSelection(1);
+                                                playClick();
                                             }}
                                             onMouseEnter={playHover}
                                             whileHover={{ x: 4 }}
@@ -281,40 +302,49 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -18, scale: 0.985 }}
                                             transition={{ duration: 0.45, ease: [0.19, 1, 0.22, 1] }}
-                                        >
-                                            <div className={styles.expandedImageFrame}>
-                                                <Image
+	                                        >
+	                                            <div className={styles.expandedImageFrame}>
+	                                                <Image
                                                     src={selectedShot.src}
                                                     alt={`${title} fullscreen view`}
                                                     fill
                                                     sizes="92vw"
-                                                    className={styles.expandedImage}
-                                                />
-                                            </div>
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: 10 }}
-                                                transition={{ delay: 0.2, duration: 0.3 }}
-                                                className={styles.expandedAnnotation}
-                                            >
-                                                {selectedShot.annotation}
-                                            </motion.div>
+	                                                    className={styles.expandedImage}
+	                                                />
+	                                            </div>
+	                                        </motion.div>
+	                                    </AnimatePresence>
+
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={`${selectedShot.id}-annotation`}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ delay: 0.12, duration: 0.28 }}
+                                            className={styles.expandedAnnotation}
+                                        >
+                                            {selectedShot.annotation}
                                         </motion.div>
                                     </AnimatePresence>
 
-                                    <div className={styles.filmstrip} aria-label="Image timeline">
-                                        {screenshots.map((shot, index) => (
+	                                    <div className={styles.filmstrip} aria-label="Image timeline">
+                                        {filmstripItems.map(({ shot, shotIndex, offset, absOffset }) => (
                                             <button
                                                 key={shot.id}
                                                 type="button"
-                                                className={`${styles.filmstripItem} ${index === selectedIndex ? styles.filmstripItemActive : ""}`}
+                                                className={`${styles.filmstripItem} ${shotIndex === selectedIndex ? styles.filmstripItemActive : ""}`}
+                                                style={{
+                                                    "--offset": offset,
+                                                    "--abs-offset": absOffset,
+                                                    zIndex: 100 - absOffset,
+                                                } as CSSProperties}
                                                 onClick={() => {
+                                                    setSelectedIndex(shotIndex);
                                                     playClick();
-                                                    setSelectedIndex(index);
                                                 }}
                                                 onMouseEnter={playHover}
-                                                aria-label={`Open image ${index + 1}`}
+                                                aria-label={`Open image ${shotIndex + 1}`}
                                             >
                                                 <Image
                                                     src={shot.src}
@@ -323,7 +353,7 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                                                     sizes="96px"
                                                     className={styles.filmstripImage}
                                                 />
-                                                <span>{String(index + 1).padStart(2, "0")}</span>
+                                                <span>{String(shotIndex + 1).padStart(2, "0")}</span>
                                             </button>
                                         ))}
                                     </div>

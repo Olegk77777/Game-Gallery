@@ -8,7 +8,6 @@ import styles from "./page.module.css";
 
 export default async function Home() {
   const games = await getGames();
-  const frameCount = games.reduce((total, game) => total + game.screenshots.length, 0);
   const heroShots = games
     .flatMap((game) =>
       game.screenshots.map((shot) => ({
@@ -27,8 +26,6 @@ export default async function Home() {
         <section className={styles.heroSection}>
           <HeroTitle
             shots={heroShots}
-            gameCount={games.length}
-            frameCount={frameCount}
           />
         </section>
 

@@ -27,15 +27,12 @@
 }
 
 .titleWrapper {
-  --mx: 0;
-  --my: 0;
-  --hero-progress: 0%;
   position: relative;
   width: 100%;
   min-height: 82svh;
   display: flex;
-  align-items: center;
-  padding: 8rem 2rem 7rem;
+  align-items: flex-end;
+  padding: 8rem 2rem 6rem;
   isolation: isolate;
 }
 
@@ -56,7 +53,7 @@
   background:
     radial-gradient(ellipse at center, transparent 0 56%, rgba(0, 0, 0, 0.16) 72%, rgba(0, 0, 0, 0.62) 100%),
     linear-gradient(90deg, rgba(0, 0, 0, 0.36), transparent 24%, transparent 76%, rgba(0, 0, 0, 0.36));
-  filter: blur(18px);
+  filter: blur(10px);
   transform: scale(1.02);
 }
 
@@ -90,8 +87,8 @@
   inset: 0;
   z-index: 2;
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.16) 42%, rgba(0, 0, 0, 0.02) 100%),
-    linear-gradient(0deg, rgba(5, 5, 5, 0.3) 0%, rgba(5, 5, 5, 0) 44%, rgba(5, 5, 5, 0.1) 100%);
+    linear-gradient(90deg, rgba(0, 0, 0, 0.44) 0%, rgba(0, 0, 0, 0.1) 42%, rgba(0, 0, 0, 0.02) 100%),
+    linear-gradient(0deg, rgba(5, 5, 5, 0.5) 0%, rgba(5, 5, 5, 0.04) 44%, rgba(5, 5, 5, 0.06) 100%);
 }
 
 .heroLetterbox {
@@ -103,51 +100,6 @@
   opacity: 0.2;
 }
 
-.heroAura {
-  position: absolute;
-  inset: -18%;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at calc(50% + (var(--mx) * 9%)) calc(50% + (var(--my) * 9%)), rgba(255, 248, 226, 0.24), transparent 19rem),
-    radial-gradient(circle at 74% 24%, rgba(128, 168, 255, 0.1), transparent 22rem),
-    conic-gradient(from 120deg at 64% 48%, transparent, rgba(255, 255, 255, 0.08), transparent 26%);
-  filter: blur(18px);
-  mix-blend-mode: screen;
-  opacity: 0.72;
-  transform: translate3d(calc(var(--mx) * 10px), calc(var(--my) * 10px), 0);
-  transition: transform 0.5s ease;
-}
-
-.heroGrid {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 6rem 6rem;
-  mask-image:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.62), transparent 48%),
-    linear-gradient(0deg, rgba(0, 0, 0, 0.7), transparent 52%);
-  opacity: 0.18;
-}
-
-.heroScanline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  z-index: 5;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-  box-shadow: 0 0 34px rgba(255, 255, 255, 0.26);
-  animation: heroScan 6.5s ease-in-out infinite;
-  opacity: 0.58;
-}
-
 .heroContent {
   width: min(100%, var(--max-width));
   margin: 0 auto;
@@ -155,272 +107,26 @@
   z-index: 1;
 }
 
-.heroSystemBar {
-  width: min(44rem, 100%);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1.2rem;
-  color: rgba(255, 255, 255, 0.68);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.95);
-}
-
-.heroSystemBar span {
-  position: relative;
-  min-height: 1.85rem;
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  padding: 0 0.72rem;
-  background: rgba(255, 255, 255, 0.045);
-  backdrop-filter: blur(18px);
-}
-
-.heroSystemBar span:first-child::before {
-  content: "";
-  width: 0.42rem;
-  height: 0.42rem;
-  margin-right: 0.5rem;
-  border-radius: 50%;
-  background: #f5efe2;
-  box-shadow: 0 0 18px rgba(245, 239, 226, 0.72);
-}
-
-.heroEyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.72);
-  text-transform: uppercase;
-  letter-spacing: 0;
-  margin-bottom: 1.2rem;
-  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.95);
-}
-
-.title {
-  font-family: var(--font-serif);
-  font-size: 3.4rem;
-  font-weight: 400;
-  letter-spacing: 0;
-  margin: 0 0 1rem;
+.heroGameTitle {
+  width: min(100%, 42rem);
+  margin: 0;
   color: #f4f1ea;
-  line-height: 0.92;
-  max-width: 10.5ch;
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  font-weight: 500;
+  line-height: 0.94;
   text-shadow:
-    0 3px 18px rgba(0, 0, 0, 0.95),
-    0 24px 70px rgba(0, 0, 0, 0.86);
+    0 4px 24px rgba(0, 0, 0, 0.8),
+    0 28px 80px rgba(0, 0, 0, 0.72);
 }
 
-.titleLine {
-  position: relative;
-  display: block;
-}
-
-.titleLine::after {
-  content: attr(data-text);
-  position: absolute;
-  left: 0.08em;
-  top: 0.08em;
-  z-index: -1;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.32);
-  text-stroke: 1px rgba(255, 255, 255, 0.32);
-  opacity: 0.58;
-  transform: translate3d(calc(var(--mx) * 8px), calc(var(--my) * 8px), 0);
-  transition: transform 0.5s ease;
-}
-
-.subtitle {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
+.heroGameAnnotation {
+  width: min(100%, 38rem);
+  margin: 1.15rem 0 0;
   color: rgba(255, 255, 255, 0.78);
-  letter-spacing: 0;
-  text-transform: uppercase;
-  font-weight: 400;
-  margin: 0;
-  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.95);
-}
-
-.heroMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 2rem;
-}
-
-.heroMeta span {
-  min-height: 2.4rem;
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  padding: 0 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.78);
-  text-transform: uppercase;
-  letter-spacing: 0;
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(12px);
-}
-
-.heroMeta span::before {
-  content: "";
-  width: 0.28rem;
-  height: 0.28rem;
-  margin-right: 0.48rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.72);
-}
-
-.heroTelemetry {
-  width: min(38rem, 100%);
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
-  margin-top: 1.2rem;
-}
-
-.telemetryPanel {
-  min-height: 4rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.38rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.025)),
-    rgba(0, 0, 0, 0.16);
-  backdrop-filter: blur(18px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.telemetryPanel span {
-  color: rgba(255, 255, 255, 0.42);
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-}
-
-.telemetryPanel strong {
-  color: rgba(255, 255, 255, 0.82);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 400;
-  text-transform: uppercase;
-}
-
-.heroProgress {
-  grid-column: 1 / -1;
-  position: relative;
-  height: 1px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.heroProgress span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: var(--hero-progress);
-  background: linear-gradient(90deg, #f5efe2, rgba(255, 255, 255, 0.42));
-  box-shadow: 0 0 18px rgba(245, 239, 226, 0.34);
-  transition: width 0.9s cubic-bezier(0.19, 1, 0.22, 1);
-}
-
-.heroDeck {
-  position: absolute;
-  top: 50%;
-  right: 2rem;
-  z-index: 2;
-  display: grid;
-  gap: 0.62rem;
-  transform: translateY(-50%);
-}
-
-.heroThumb {
-  position: relative;
-  width: 5.2rem;
-  aspect-ratio: 21 / 9;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  appearance: none;
-  color: rgba(255, 255, 255, 0.76);
-  cursor: none !important;
-  transition:
-    border-color 0.35s ease,
-    transform 0.35s ease,
-    opacity 0.35s ease;
-  opacity: 0.62;
-}
-
-.heroThumb::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.48), transparent),
-    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.4));
-}
-
-.heroThumb:hover,
-.heroThumbActive {
-  border-color: rgba(255, 255, 255, 0.58);
-  opacity: 1;
-  transform: translateX(-0.5rem);
-}
-
-.heroThumbActive {
-  box-shadow: 0 0 0 1px rgba(245, 239, 226, 0.22), 0 18px 40px rgba(0, 0, 0, 0.36);
-}
-
-.heroThumbImage {
-  object-fit: cover;
-  filter: saturate(1.05) contrast(1.06);
-}
-
-.heroThumb span {
-  position: absolute;
-  left: 0.42rem;
-  bottom: 0.32rem;
-  z-index: 1;
-  font-family: var(--font-mono);
-  font-size: 0.56rem;
-  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);
-}
-
-.heroCaption {
-  position: absolute;
-  right: 2rem;
-  bottom: 8rem;
-  z-index: 2;
-  width: min(34rem, calc(100% - 4rem));
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1rem;
-  align-items: start;
-  color: rgba(255, 255, 255, 0.76);
-}
-
-.heroCaption span {
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.46);
-  padding-top: 0.2rem;
-}
-
-.heroCaption p {
-  margin: 0;
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.55;
-  text-shadow: 0 6px 26px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 6px 26px rgba(0, 0, 0, 0.82);
 }
 
 .albumsContainer {
@@ -435,18 +141,14 @@
     padding: 9rem 4rem 7rem;
   }
 
-  .title {
-    font-size: 5.6rem;
-  }
-
-  .subtitle {
-    font-size: 1rem;
+  .heroGameTitle {
+    font-size: 5rem;
   }
 }
 
 @media (min-width: 1200px) {
-  .title {
-    font-size: 7.25rem;
+  .heroGameTitle {
+    font-size: 6.4rem;
   }
 }
 
@@ -458,7 +160,7 @@
 
   .titleWrapper {
     align-items: flex-end;
-    padding: 6rem 1rem 8rem;
+    padding: 6rem 1rem 4rem;
   }
 
   .heroScrim {
@@ -467,60 +169,13 @@
       linear-gradient(90deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0));
   }
 
-  .title {
-    font-size: 3.15rem;
-    max-width: 8ch;
+  .heroGameTitle {
+    font-size: 2.5rem;
   }
 
-  .heroSystemBar {
-    font-size: 0.58rem;
-  }
-
-  .heroEyebrow {
-    font-size: 0.68rem;
-    letter-spacing: 0;
-  }
-
-  .subtitle {
-    max-width: 18rem;
-    line-height: 1.6;
-  }
-
-  .heroCaption {
-    left: 1rem;
-    right: 1rem;
-    bottom: 5.2rem;
-    width: auto;
-  }
-
-  .heroCaption p {
-    font-size: 0.78rem;
-  }
-
-  .heroTelemetry {
-    grid-template-columns: 1fr;
-  }
-
-  .telemetryPanel:nth-child(2) {
-    display: none;
-  }
-
-  .heroDeck {
-    right: 1rem;
-    top: auto;
-    bottom: 1.1rem;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    width: calc(100% - 2rem);
-    transform: none;
-  }
-
-  .heroThumb {
-    width: auto;
-  }
-
-  .heroThumb:hover,
-  .heroThumbActive {
-    transform: translateY(-0.25rem);
+  .heroGameAnnotation {
+    font-size: 0.86rem;
+    max-width: 22rem;
   }
 }
 
@@ -531,22 +186,5 @@
 
   to {
     transform: scale(1.1) translate3d(1.4%, 1%, 0);
-  }
-}
-
-@keyframes heroScan {
-  0% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-
-  12%,
-  72% {
-    opacity: 0.58;
-  }
-
-  100% {
-    transform: translateY(82svh);
-    opacity: 0;
   }
 }

@@ -17,15 +17,17 @@ export default function ScreenshotCard({ src, alt, annotation, onClick, layoutId
     const { playHover, playClick } = useSound();
 
     return (
-        <motion.div
+        <motion.button
+            type="button"
             className={`${styles.container} cursor-hover`}
             onClick={() => {
-                playClick();
                 onClick?.();
+                playClick();
             }}
             onMouseEnter={playHover}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.3 }}
+            aria-label={`Open screenshot: ${annotation}`}
         >
             {/* 21:9 Aspect Ratio Container - Shared Element for Lightbox */}
             <div className={styles.imageWrapper}>
@@ -56,6 +58,6 @@ export default function ScreenshotCard({ src, alt, annotation, onClick, layoutId
                     {annotation}
                 </p>
             </div>
-        </motion.div>
+        </motion.button>
     );
 }

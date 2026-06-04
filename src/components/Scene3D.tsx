@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 const vertexShader = `
@@ -43,7 +43,7 @@ function seededValue(index: number, salt: number) {
     return value - Math.floor(value);
 }
 
-function LuminanceField({ count = 420 }) {
+function LuminanceField({ count = 260 }) {
     const points = useRef<THREE.Points>(null);
     const material = useRef<THREE.ShaderMaterial>(null);
     const uniforms = useMemo(
@@ -104,6 +104,28 @@ function LuminanceField({ count = 420 }) {
 }
 
 export default function Scene3D() {
+    const [shouldRender, setShouldRender] = useState(false);
+
+    useEffect(() => {
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        if (prefersReducedMotion) {
+            return;
+        }
+
+        if ("requestIdleCallback" in window) {
+            const idleId = window.requestIdleCallback(() => setShouldRender(true), { timeout: 2200 });
+            return () => window.cancelIdleCallback(idleId);
+        }
+
+        const timer = setTimeout(() => setShouldRender(true), 1600);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (!shouldRender) {
+        return null;
+    }
+
     return (
         <div
             aria-hidden="true"
@@ -119,7 +141,7 @@ export default function Scene3D() {
         >
             <Canvas
                 camera={{ position: [0, 0, 32], fov: 72 }}
-                dpr={[1, 1.15]}
+                dpr={[1, 1]}
                 gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
             >
                 <color attach="background" args={["#050505"]} />

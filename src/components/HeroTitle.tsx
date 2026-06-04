@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { type CSSProperties, type PointerEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useIntro } from "./IntroContext";
 import styles from "@/app/page.module.css";
 
@@ -15,16 +15,20 @@ interface HeroShot {
 
 interface HeroTitleProps {
     shots: HeroShot[];
-    gameCount: number;
-    frameCount: number;
 }
 
-function createShuffledOrder(length: number, avoidFirstIndex?: number) {
+function createShuffledOrder(length: number, avoidFirstIndex?: number, firstIndex?: number) {
     const order = Array.from({ length }, (_, index) => index);
 
     for (let index = order.length - 1; index > 0; index -= 1) {
         const swapIndex = Math.floor(Math.random() * (index + 1));
         [order[index], order[swapIndex]] = [order[swapIndex], order[index]];
+    }
+
+    if (firstIndex !== undefined && order.length > 1) {
+        const forcedIndex = order.indexOf(firstIndex);
+        [order[0], order[forcedIndex]] = [order[forcedIndex], order[0]];
+        return order;
     }
 
     if (avoidFirstIndex !== undefined && order.length > 1 && order[0] === avoidFirstIndex) {
@@ -34,7 +38,7 @@ function createShuffledOrder(length: number, avoidFirstIndex?: number) {
     return order;
 }
 
-export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitleProps) {
+export default function HeroTitle({ shots }: HeroTitleProps) {
     const { isIntroComplete } = useIntro();
     const [activeIndex, setActiveIndex] = useState(0);
     const [shotOrder, setShotOrder] = useState<number[]>([]);
@@ -42,35 +46,10 @@ export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitlePro
         ? shotOrder.map((shotIndex) => shots[shotIndex])
         : shots;
     const activeShot = orderedShots[activeIndex];
-    const progress = orderedShots.length > 0 ? `${((activeIndex + 1) / orderedShots.length) * 100}%` : "0%";
-    const deckItems = Array.from(
-        { length: Math.min(6, orderedShots.length) },
-        (_, slot) => {
-            const orderedIndex = (activeIndex + slot) % orderedShots.length;
-            return {
-                orderedIndex,
-                shot: orderedShots[orderedIndex],
-            };
-        }
-    );
-
-    const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-        const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-
-        event.currentTarget.style.setProperty("--mx", x.toFixed(3));
-        event.currentTarget.style.setProperty("--my", y.toFixed(3));
-    };
-
-    const resetPointer = (event: PointerEvent<HTMLDivElement>) => {
-        event.currentTarget.style.setProperty("--mx", "0");
-        event.currentTarget.style.setProperty("--my", "0");
-    };
 
     useEffect(() => {
         setActiveIndex(0);
-        setShotOrder(createShuffledOrder(shots.length));
+        setShotOrder(createShuffledOrder(shots.length, undefined, 0));
     }, [shots.length]);
 
     useEffect(() => {
@@ -95,12 +74,7 @@ export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitlePro
     }, [isIntroComplete, shots.length]);
 
     return (
-        <div
-            className={styles.titleWrapper}
-            onPointerMove={handlePointerMove}
-            onPointerLeave={resetPointer}
-            style={{ "--hero-progress": progress } as CSSProperties}
-        >
+        <div className={styles.titleWrapper}>
             {activeShot && (
                 <div className={styles.heroMedia} aria-hidden="true">
                     <AnimatePresence mode="wait">
@@ -122,11 +96,8 @@ export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitlePro
                             />
                         </motion.div>
                     </AnimatePresence>
-                    <div className={styles.heroAura} />
-                    <div className={styles.heroGrid} />
                     <div className={styles.heroScrim} />
                     <div className={styles.heroLetterbox} />
-                    <div className={styles.heroScanline} />
                 </div>
             )}
 
@@ -136,114 +107,25 @@ export default function HeroTitle({ shots, gameCount, frameCount }: HeroTitlePro
                 animate={isIntroComplete ? { opacity: 1, y: 0 } : { opacity: 0, y: 80 }}
                 transition={{ duration: 1.4, ease: [0.19, 1, 0.22, 1], delay: 0.25 }}
             >
-                <motion.div
-                    className={styles.heroSystemBar}
-                    initial={{ opacity: 0, y: -12 }}
-                    animate={isIntroComplete ? { opacity: 1, y: 0 } : { opacity: 0, y: -12 }}
-                    transition={{ duration: 1, delay: 0.45 }}
-                >
-                    <span>Frame operating system</span>
-                    <span>Live curation</span>
-                    <span>{String(activeIndex + 1).padStart(2, "0")} / {String(orderedShots.length).padStart(2, "0")}</span>
-                </motion.div>
-
-                <motion.p
-                    className={styles.heroEyebrow}
-                    initial={{ opacity: 0 }}
-                    animate={isIntroComplete ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ duration: 1.1, delay: 0.65 }}
-                >
-                    {activeShot?.gameTitle ?? "Curated game photography"}
-                </motion.p>
-
                 <motion.h1
-                    className={styles.title}
-                    initial={{ opacity: 0, y: 100 }}
-                    animate={isIntroComplete ? { opacity: 1, y: 0 } : { opacity: 0, y: 100 }}
-                    transition={{ duration: 1.5, ease: [0.19, 1, 0.22, 1], delay: 0.5 }}
+                    className={styles.heroGameTitle}
+                    initial={{ opacity: 0 }}
+                    animate={isIntroComplete ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ duration: 1.1, delay: 0.45 }}
                 >
-                    <span className={styles.titleLine} data-text="GAME">GAME</span>
-                    <span className={styles.titleLine} data-text="GALLERY">GALLERY</span>
+                    {activeShot?.gameTitle ?? "Game Gallery"}
                 </motion.h1>
-                <motion.p
-                    className={styles.subtitle}
-                    initial={{ opacity: 0 }}
-                    animate={isIntroComplete ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ duration: 1.5, delay: 0.8 }}
-                >
-                    Cinematic 21:9 frame archive
-                </motion.p>
-                <motion.div
-                    className={styles.heroMeta}
-                    initial={{ opacity: 0 }}
-                    animate={isIntroComplete ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ duration: 1, delay: 1.1 }}
-                >
-                    <span>{String(gameCount).padStart(2, "0")} worlds</span>
-                    <span>{String(frameCount).padStart(2, "0")} frames</span>
-                    <span>ultrawide</span>
-                </motion.div>
-
-                <motion.div
-                    className={styles.heroTelemetry}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={isIntroComplete ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
-                    transition={{ duration: 1, delay: 1.2 }}
-                >
-                    <div className={styles.telemetryPanel}>
-                        <span>Active world</span>
-                        <strong>{activeShot?.gameTitle ?? "Curated game photography"}</strong>
-                    </div>
-                    <div className={styles.telemetryPanel}>
-                        <span>Signal</span>
-                        <strong>Cinematic stream</strong>
-                    </div>
-                    <div className={styles.heroProgress} aria-hidden="true">
-                        <span />
-                    </div>
-                </motion.div>
+                {activeShot?.annotation && (
+                    <motion.p
+                        className={styles.heroGameAnnotation}
+                        initial={{ opacity: 0, y: 18 }}
+                        animate={isIntroComplete ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
+                        transition={{ duration: 1.1, delay: 0.65 }}
+                    >
+                        {activeShot.annotation}
+                    </motion.p>
+                )}
             </motion.div>
-
-            {deckItems.length > 0 && (
-                <motion.div
-                    className={styles.heroDeck}
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={isIntroComplete ? { opacity: 1, x: 0 } : { opacity: 0, x: 24 }}
-                    transition={{ duration: 1, delay: 1.15 }}
-                    aria-label="Featured frames"
-                >
-                    {deckItems.map(({ shot, orderedIndex }) => (
-                        <button
-                            key={shot.id}
-                            type="button"
-                            className={`${styles.heroThumb} ${orderedIndex === activeIndex ? styles.heroThumbActive : ""}`}
-                            onClick={() => setActiveIndex(orderedIndex)}
-                            aria-label={`Show frame ${orderedIndex + 1}: ${shot.gameTitle}`}
-                        >
-                            <Image
-                                src={shot.src}
-                                alt=""
-                                fill
-                                sizes="96px"
-                                className={styles.heroThumbImage}
-                            />
-                            <span>{String(orderedIndex + 1).padStart(2, "0")}</span>
-                        </button>
-                    ))}
-                </motion.div>
-            )}
-
-            {activeShot && (
-                <motion.div
-                    className={styles.heroCaption}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={isIntroComplete ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ duration: 1, delay: 1.35 }}
-                >
-                    <span>{String(activeIndex + 1).padStart(2, "0")}</span>
-                    <p>{activeShot.annotation}</p>
-                </motion.div>
-            )}
         </div>
     );
 }

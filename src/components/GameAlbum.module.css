@@ -132,7 +132,7 @@
     background:
         radial-gradient(ellipse at center, transparent 0 58%, rgba(0, 0, 0, 0.16) 74%, rgba(0, 0, 0, 0.62) 100%),
         linear-gradient(90deg, rgba(0, 0, 0, 0.32), transparent 24%, transparent 76%, rgba(0, 0, 0, 0.32));
-    filter: blur(16px);
+    filter: blur(10px);
     transform: scale(1.02);
 }
 
@@ -360,13 +360,6 @@
         linear-gradient(180deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.92));
 }
 
-.backdropImage {
-    object-fit: cover;
-    filter: blur(24px) saturate(1.12) brightness(0.34);
-    transform: scale(1.08);
-    opacity: 0.46;
-}
-
 .lightboxContent {
     position: relative;
     z-index: 2;
@@ -375,7 +368,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 4rem 0 5.2rem;
+    padding: 4rem 0 1.2rem;
 }
 
 .lightboxChrome {
@@ -416,6 +409,7 @@
     position: relative;
     z-index: 2;
     width: 100%;
+    flex: 0 0 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -428,7 +422,7 @@
     position: relative;
     width: 100%;
     aspect-ratio: 21 / 9;
-    max-height: calc(88svh - 12rem);
+    max-height: calc(88svh - 17rem);
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 8px;
@@ -464,7 +458,10 @@
 
 .expandedAnnotation {
     width: min(100%, 860px);
+    flex: 0 0 auto;
     margin-top: 1rem;
+    margin-right: auto;
+    margin-left: auto;
     color: rgba(255, 255, 255, 0.82);
     font-size: 1rem;
     line-height: 1.55;
@@ -473,40 +470,42 @@
 }
 
 .filmstrip {
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    z-index: 3;
-    width: min(100%, 820px);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(4.7rem, 1fr));
-    gap: 0.5rem;
-    padding: 0.7rem;
+    position: relative;
+    z-index: 1;
+    width: min(100%, 900px);
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin: 1.35rem auto 0;
+    padding: 0.75rem 1.1rem;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     background:
         linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
         rgba(0, 0, 0, 0.24);
-    backdrop-filter: blur(18px);
+    backdrop-filter: blur(10px);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    transform: translateX(-50%);
+    perspective: 900px;
     transition:
         opacity 0.42s cubic-bezier(0.19, 1, 0.22, 1),
         filter 0.42s cubic-bezier(0.19, 1, 0.22, 1),
         transform 0.42s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
-.expandedImageWrapper:hover+.filmstrip {
-    opacity: 0.18;
-    filter: blur(5px) saturate(0.75);
+.expandedImageWrapper:hover~.filmstrip {
+    opacity: 0.3;
     pointer-events: none;
-    transform: translateX(-50%) translateY(46%) scale(0.92);
+    transform: translateY(1.8rem) scale(0.94);
 }
 
 .filmstripItem {
+    --offset: 0;
+    --abs-offset: 0;
     position: relative;
-    min-width: 0;
+    flex: 0 0 5.6rem;
     aspect-ratio: 21 / 9;
+    margin-inline: -0.12rem;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 5px;
@@ -515,6 +514,11 @@
     color: rgba(255, 255, 255, 0.72);
     cursor: none !important;
     opacity: 0.56;
+    transform:
+        translateX(calc(var(--offset) * -0.18rem))
+        translateY(calc(var(--abs-offset) * 0.12rem))
+        rotateY(calc(var(--offset) * -10deg))
+        scale(calc(1 - (var(--abs-offset) * 0.045)));
     transition:
         opacity 0.3s ease,
         border-color 0.3s ease,
@@ -534,7 +538,11 @@
 .filmstripItemActive {
     opacity: 1;
     border-color: rgba(245, 239, 226, 0.62);
-    transform: translateY(-0.18rem);
+    transform:
+        translateX(calc(var(--offset) * -0.18rem))
+        translateY(-0.18rem)
+        rotateY(calc(var(--offset) * -10deg))
+        scale(1);
 }
 
 .filmstripItemActive {
@@ -662,7 +670,7 @@
     .lightboxContent {
         width: calc(100vw - 2rem);
         height: 86svh;
-        padding: 3rem 0 5rem;
+        padding: 3rem 0 0;
     }
 
     .lightboxHeader {
@@ -680,7 +688,7 @@
 
     .filmstrip {
         width: 100%;
-        display: flex;
+        justify-content: flex-start;
         overflow-x: auto;
         scrollbar-width: none;
     }
@@ -690,7 +698,8 @@
     }
 
     .filmstripItem {
-        min-width: 4.8rem;
+        flex-basis: 4.8rem;
+        margin-inline: 0;
     }
 
     .navButton {

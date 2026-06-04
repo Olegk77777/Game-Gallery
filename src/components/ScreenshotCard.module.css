@@ -3,6 +3,13 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    appearance: none;
     cursor: none !important;
 }
 
