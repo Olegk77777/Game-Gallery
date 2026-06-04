@@ -39,11 +39,7 @@ export default function Preloader() {
             initial={{ opacity: 1 }}
             className={styles.overlay}
         >
-            <div className={styles.inner}>
-                <div className={styles.header}>
-                    <span>Game Gallery</span>
-                    <span>Frame system boot</span>
-                </div>
+            <div className={styles.inner} role="status" aria-live="polite" aria-label="Loading">
                 <div className={styles.percent}>
                     {String(progress).padStart(3, "0")}%
                 </div>
@@ -52,10 +48,6 @@ export default function Preloader() {
                         style={{ width: `${progress}%` }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
                     />
-                </div>
-                <div className={styles.footer}>
-                    <span>Curating worlds</span>
-                    <span>21:9 archive</span>
                 </div>
             </div>
         </motion.div>
