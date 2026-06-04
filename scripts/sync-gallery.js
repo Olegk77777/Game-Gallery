@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const GALLERY_DIR = path.join(process.cwd(), 'public', 'gallery');
+const HERO_GALLERY_DIR = path.join(process.cwd(), 'public', 'hero-gallery');
 const OUTPUT_FILE = path.join(process.cwd(), 'src', 'data', 'games.json');
 
 // Ensure gallery directory exists
@@ -47,14 +48,20 @@ function getGames() {
                             annotation = fs.readFileSync(txtPath, 'utf-8').trim();
                         }
 
-                        // Create relative path for src
-                        const relativePath = path.relative(path.join(process.cwd(), 'public'), filePath);
+	                        // Create relative path for src
+	                        const relativePath = path.relative(path.join(process.cwd(), 'public'), filePath);
+                            const heroRelativeFile = path.relative(GALLERY_DIR, filePath).replace(/\.(jpg|jpeg|png|webp|gif)$/i, '.jpg');
+                            const heroFilePath = path.join(HERO_GALLERY_DIR, heroRelativeFile);
+                            const heroRelativePath = fs.existsSync(heroFilePath)
+                                ? path.relative(path.join(process.cwd(), 'public'), heroFilePath)
+                                : relativePath;
 
-                        game.screenshots.push({
-                            id: imageId,
-                            src: `/${relativePath}`,
-                            annotation: annotation
-                        });
+	                        game.screenshots.push({
+	                            id: imageId,
+	                            src: `/${relativePath}`,
+                                heroSrc: `/${heroRelativePath}`,
+	                            annotation: annotation
+	                        });
                     }
                 }
             }

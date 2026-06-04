@@ -6,11 +6,12 @@ import { useEffect, useState } from "react";
 import { useIntro } from "./IntroContext";
 import styles from "@/app/page.module.css";
 
-const COLLAGE_TILE_COUNT = 7;
+const COLLAGE_TILE_COUNT = 5;
 
 interface HeroShot {
     id: string;
     src: string;
+    heroSrc?: string;
     annotation: string;
     gameTitle: string;
 }
@@ -44,6 +45,7 @@ export default function HeroTitle({ shots }: HeroTitleProps) {
     const { isIntroComplete } = useIntro();
     const [activeIndex, setActiveIndex] = useState(0);
     const [shotOrder, setShotOrder] = useState<number[]>([]);
+    const [loadedSources, setLoadedSources] = useState<Set<string>>(() => new Set());
     const orderedShots = shotOrder.length === shots.length
         ? shotOrder.map((shotIndex) => shots[shotIndex])
         : shots;
@@ -86,25 +88,39 @@ export default function HeroTitle({ shots }: HeroTitleProps) {
             <div className={styles.heroMedia} aria-hidden="true">
                 <div className={styles.heroCollage}>
                     <AnimatePresence>
-                        {collageShots.map((shot, index) => (
-                            <motion.div
-                                key={`${index}-${shot.id}`}
-                                className={`${styles.heroCollageTile} ${styles[`heroCollageTile${index + 1}`]}`}
-                                initial={{ opacity: 0, y: 18, scale: 0.96 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: -14, scale: 0.98 }}
-                                transition={{ duration: 0.85, ease: [0.19, 1, 0.22, 1], delay: index * 0.04 }}
-                            >
-                                <Image
-                                    src={shot.src}
-                                    alt=""
-                                    fill
-                                    priority={index === 0}
-                                    sizes={index === 0 ? "(max-width: 760px) 92vw, 680px" : "(max-width: 760px) 46vw, 320px"}
-                                    className={styles.heroCollageImage}
-                                />
-                            </motion.div>
-                        ))}
+                        {collageShots.map((shot, index) => {
+                            const imageSrc = shot.heroSrc ?? shot.src;
+                            const isLoaded = loadedSources.has(imageSrc);
+
+                            return (
+                                <motion.div
+                                    key={`${index}-${shot.id}`}
+                                    className={`${styles.heroCollageTile} ${styles[`heroCollageTile${index + 1}`]} ${isLoaded ? styles.heroCollageTileLoaded : ""}`}
+                                    initial={{ opacity: 0, y: 18, scale: 0.96 }}
+                                    animate={{ opacity: isLoaded ? 1 : 0, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -14, scale: 0.98 }}
+                                    transition={{ duration: 0.65, ease: [0.19, 1, 0.22, 1], delay: index * 0.04 }}
+                                >
+                                    <Image
+                                        src={imageSrc}
+                                        alt=""
+                                        fill
+                                        priority={index === 0}
+                                        loading={index === 0 ? "eager" : "lazy"}
+                                        sizes={index === 0 ? "(max-width: 760px) 92vw, 680px" : "(max-width: 760px) 46vw, 320px"}
+                                        className={styles.heroCollageImage}
+                                        onLoad={() => {
+                                            setLoadedSources((current) => {
+                                                if (current.has(imageSrc)) return current;
+                                                const next = new Set(current);
+                                                next.add(imageSrc);
+                                                return next;
+                                            });
+                                        }}
+                                    />
+                                </motion.div>
+                            );
+                        })}
                     </AnimatePresence>
                 </div>
                 <div className={styles.heroScrim} />

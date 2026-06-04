@@ -79,14 +79,24 @@
 .heroCollageTile {
   position: absolute;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid transparent;
   border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  transform-origin: center;
+  will-change: transform, opacity;
+  transition:
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    background 0.35s ease;
+}
+
+.heroCollageTileLoaded {
+  border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.04);
   box-shadow:
     0 28px 90px rgba(0, 0, 0, 0.52),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform-origin: center;
-  will-change: transform, opacity;
 }
 
 .heroCollageTile::after {
@@ -98,6 +108,12 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 18%, rgba(0, 0, 0, 0.28)),
     radial-gradient(ellipse at center, transparent 56%, rgba(0, 0, 0, 0.32) 100%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.heroCollageTileLoaded::after {
+  opacity: 1;
 }
 
 .heroCollageTile1 {

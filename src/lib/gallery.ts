@@ -4,6 +4,7 @@ import path from 'path';
 export interface Screenshot {
     id: string;
     src: string;
+    heroSrc?: string;
     annotation: string;
 }
 
@@ -44,6 +45,11 @@ export async function getGames(): Promise<Game[]> {
             const imagePath = path.join(gamePath, imageFile);
             const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
             const relativePath = `${basePath}/gallery/${gameTitle}/${imageFile}`;
+            const heroImageFile = imageFile.replace(/\.(jpg|jpeg|png|webp)$/i, '.jpg');
+            const heroImagePath = path.join(process.cwd(), 'public', 'hero-gallery', gameTitle, heroImageFile);
+            const heroRelativePath = fs.existsSync(heroImagePath)
+                ? `${basePath}/hero-gallery/${gameTitle}/${heroImageFile}`
+                : relativePath;
 
             // Check for corresponding text file
             const txtFile = imageFile.replace(/\.(jpg|jpeg|png|webp)$/i, '.txt');
@@ -58,11 +64,12 @@ export async function getGames(): Promise<Game[]> {
                 }
             }
 
-            screenshots.push({
-                id: imageFile, // Use filename as ID
-                src: relativePath,
-                annotation: annotation
-            });
+	            screenshots.push({
+	                id: imageFile, // Use filename as ID
+	                src: relativePath,
+                    heroSrc: heroRelativePath,
+	                annotation: annotation
+	            });
         }
 
         // Sort screenshots by name to ensure consistent order
