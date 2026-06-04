@@ -363,12 +363,12 @@
 .lightboxContent {
     position: relative;
     z-index: 2;
-    width: min(92vw, 1500px);
-    height: min(88svh, 930px);
+    width: min(98vw, 2200px);
+    height: calc(100svh - 1.5rem);
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 4rem 0 1.2rem;
+    padding: 2.6rem clamp(0.5rem, 1.2vw, 1.4rem) 5.1rem;
 }
 
 .lightboxChrome {
@@ -409,7 +409,7 @@
     position: relative;
     z-index: 2;
     width: 100%;
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -420,9 +420,9 @@
 
 .expandedImageFrame {
     position: relative;
-    width: 100%;
+    width: min(100%, 190svh);
     aspect-ratio: 21 / 9;
-    max-height: calc(88svh - 17rem);
+    max-height: calc(100svh - 7.2rem);
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 8px;
@@ -432,9 +432,9 @@
 .expandedImageFrame::before {
     content: "";
     position: absolute;
-    inset: 0.8rem;
+    inset: 0.35rem;
     z-index: 2;
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 5px;
     pointer-events: none;
 }
@@ -457,28 +457,29 @@
 }
 
 .expandedAnnotation {
-    width: min(100%, 860px);
-    flex: 0 0 auto;
-    margin-top: 1rem;
-    margin-right: auto;
-    margin-left: auto;
-    color: rgba(255, 255, 255, 0.82);
-    font-size: 1rem;
-    line-height: 1.55;
+    position: absolute;
+    right: clamp(6rem, 14vw, 18rem);
+    bottom: 4.8rem;
+    z-index: 4;
+    width: min(46rem, 52vw);
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 0.92rem;
+    line-height: 1.35;
     text-align: center;
     text-shadow: 0 2px 18px rgba(0, 0, 0, 0.72);
 }
 
 .filmstrip {
-    position: relative;
-    z-index: 1;
-    width: min(100%, 900px);
-    flex: 0 0 auto;
+    position: absolute;
+    left: 50%;
+    bottom: 0.65rem;
+    z-index: 4;
+    width: min(66vw, 820px);
     display: flex;
     justify-content: center;
     gap: 0;
-    margin: 1.35rem auto 0;
-    padding: 0.75rem 1.1rem;
+    margin: 0;
+    padding: 0.48rem 0.78rem;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     background:
@@ -487,6 +488,7 @@
     backdrop-filter: blur(10px);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     perspective: 900px;
+    transform: translateX(-50%);
     transition:
         opacity 0.42s cubic-bezier(0.19, 1, 0.22, 1),
         filter 0.42s cubic-bezier(0.19, 1, 0.22, 1),
@@ -494,16 +496,16 @@
 }
 
 .expandedImageWrapper:hover~.filmstrip {
-    opacity: 0.3;
+    opacity: 0.22;
     pointer-events: none;
-    transform: translateY(1.8rem) scale(0.94);
+    transform: translateX(-50%) translateY(1rem) scale(0.96);
 }
 
 .filmstripItem {
     --offset: 0;
     --abs-offset: 0;
     position: relative;
-    flex: 0 0 5.6rem;
+    flex: 0 0 5rem;
     aspect-ratio: 21 / 9;
     margin-inline: -0.12rem;
     overflow: hidden;
@@ -583,17 +585,17 @@
 }
 
 .lightboxCloseButton {
-    top: 2rem;
-    right: 2rem;
-    width: 3.25rem;
-    height: 3.25rem;
+    top: 1rem;
+    right: 1rem;
+    width: 3rem;
+    height: 3rem;
     border-radius: 50%;
 }
 
 .navButton {
-    top: calc(50% - 2.8rem);
-    width: 4rem;
-    height: 5.6rem;
+    top: calc(50% - 2.45rem);
+    width: 3.45rem;
+    height: 4.9rem;
     border-radius: 999px;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -601,11 +603,11 @@
 }
 
 .navPrevious {
-    left: 2rem;
+    left: 1rem;
 }
 
 .navNext {
-    right: 2rem;
+    right: 1rem;
 }
 
 .lightboxCloseButton:hover,
@@ -668,9 +670,9 @@
     }
 
     .lightboxContent {
-        width: calc(100vw - 2rem);
-        height: 86svh;
-        padding: 3rem 0 0;
+        width: 100vw;
+        height: 100svh;
+        padding: 3rem 0.75rem 5.2rem;
     }
 
     .lightboxHeader {
@@ -678,16 +680,23 @@
         letter-spacing: 0;
     }
 
-    .expandedImage {
-        max-height: calc(86svh - 9rem);
+    .expandedImageFrame {
+        width: 100%;
+        max-height: calc(100svh - 8rem);
     }
 
     .expandedAnnotation {
+        right: 50%;
+        bottom: 4.45rem;
+        width: min(calc(100vw - 2rem), 34rem);
         font-size: 0.86rem;
+        transform: translateX(50%);
     }
 
     .filmstrip {
-        width: 100%;
+        width: calc(100vw - 8.4rem);
+        left: 50%;
+        bottom: 0.85rem;
         justify-content: flex-start;
         overflow-x: auto;
         scrollbar-width: none;
@@ -704,7 +713,7 @@
 
     .navButton {
         top: auto;
-        bottom: 1rem;
+        bottom: 0.85rem;
         width: 3.3rem;
         height: 3.3rem;
         transform: none;

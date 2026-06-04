@@ -302,18 +302,19 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -18, scale: 0.985 }}
                                             transition={{ duration: 0.45, ease: [0.19, 1, 0.22, 1] }}
-	                                        >
-	                                            <div className={styles.expandedImageFrame}>
-	                                                <Image
+                                        >
+                                            <div className={styles.expandedImageFrame}>
+                                                <Image
                                                     src={selectedShot.src}
                                                     alt={`${title} fullscreen view`}
                                                     fill
-                                                    sizes="92vw"
-	                                                    className={styles.expandedImage}
-	                                                />
-	                                            </div>
-	                                        </motion.div>
-	                                    </AnimatePresence>
+                                                    priority
+                                                    sizes="98vw"
+                                                    className={styles.expandedImage}
+                                                />
+                                            </div>
+                                        </motion.div>
+                                    </AnimatePresence>
 
                                     <AnimatePresence mode="wait">
                                         <motion.div
