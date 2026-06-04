@@ -31,7 +31,7 @@
   width: 100%;
   min-height: 82svh;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   padding: 8rem 2rem 6rem;
   isolation: isolate;
 }
@@ -69,17 +69,103 @@
   pointer-events: none;
 }
 
-.heroFrame {
+.heroCollage {
   position: absolute;
-  inset: -3%;
-  z-index: 0;
+  inset: 4.5rem 2rem 3.5rem;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.heroImage {
+.heroCollageTile {
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.heroCollageTile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 18%, rgba(0, 0, 0, 0.28)),
+    radial-gradient(ellipse at center, transparent 56%, rgba(0, 0, 0, 0.32) 100%);
+}
+
+.heroCollageTile1 {
+  top: 6rem;
+  right: 3.5rem;
+  z-index: 7;
+  width: 42rem;
+  aspect-ratio: 21 / 9;
+}
+
+.heroCollageTile2 {
+  top: 1.2rem;
+  right: 27rem;
+  z-index: 5;
+  width: 20rem;
+  aspect-ratio: 21 / 9;
+  opacity: 0.72;
+}
+
+.heroCollageTile3 {
+  right: 4rem;
+  bottom: 5rem;
+  z-index: 6;
+  width: 24rem;
+  aspect-ratio: 21 / 9;
+  opacity: 0.86;
+}
+
+.heroCollageTile4 {
+  right: 38rem;
+  bottom: 2.8rem;
+  z-index: 4;
+  width: 18rem;
+  aspect-ratio: 21 / 9;
+  opacity: 0.62;
+}
+
+.heroCollageTile5 {
+  top: 20.5rem;
+  right: 17rem;
+  z-index: 8;
+  width: 15rem;
+  aspect-ratio: 21 / 9;
+  opacity: 0.78;
+}
+
+.heroCollageTile6 {
+  top: 5rem;
+  left: 45%;
+  z-index: 3;
+  width: 14rem;
+  aspect-ratio: 21 / 9;
+  opacity: 0.54;
+}
+
+.heroCollageTile7 {
+  left: 42%;
+  bottom: 8rem;
+  z-index: 2;
+  width: 12rem;
+  aspect-ratio: 21 / 9;
+  opacity: 0.44;
+}
+
+.heroCollageImage {
   object-fit: cover;
   object-position: center;
-  filter: saturate(1.16) contrast(1.03) brightness(1.28);
-  animation: cinematicDrift 18s ease-in-out infinite alternate;
+  filter: saturate(1.08) contrast(1.04) brightness(1.14);
 }
 
 .heroScrim {
@@ -87,8 +173,8 @@
   inset: 0;
   z-index: 2;
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.44) 0%, rgba(0, 0, 0, 0.1) 42%, rgba(0, 0, 0, 0.02) 100%),
-    linear-gradient(0deg, rgba(5, 5, 5, 0.5) 0%, rgba(5, 5, 5, 0.04) 44%, rgba(5, 5, 5, 0.06) 100%);
+    linear-gradient(90deg, rgba(0, 0, 0, 0.76) 0%, rgba(0, 0, 0, 0.48) 34%, rgba(0, 0, 0, 0.12) 68%, rgba(0, 0, 0, 0.38) 100%),
+    linear-gradient(0deg, rgba(5, 5, 5, 0.62) 0%, rgba(5, 5, 5, 0.08) 44%, rgba(5, 5, 5, 0.2) 100%);
 }
 
 .heroLetterbox {
@@ -104,25 +190,38 @@
   width: min(100%, var(--max-width));
   margin: 0 auto;
   position: relative;
-  z-index: 1;
+  z-index: 5;
 }
 
-.heroGameTitle {
+.heroBrandKicker {
+  margin: 0 0 1rem;
+  color: rgba(255, 255, 255, 0.62);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+}
+
+.heroSiteTitle {
   width: min(100%, 42rem);
   margin: 0;
   color: #f4f1ea;
   font-family: var(--font-serif);
-  font-size: 3rem;
+  font-size: 4rem;
   font-weight: 500;
-  line-height: 0.94;
+  line-height: 0.86;
   text-shadow:
     0 4px 24px rgba(0, 0, 0, 0.8),
     0 28px 80px rgba(0, 0, 0, 0.72);
 }
 
-.heroGameAnnotation {
-  width: min(100%, 38rem);
-  margin: 1.15rem 0 0;
+.heroSiteTitle span {
+  display: block;
+}
+
+.heroSiteSubtitle {
+  width: min(100%, 35rem);
+  margin: 1.35rem 0 0;
   color: rgba(255, 255, 255, 0.78);
   font-size: 1rem;
   line-height: 1.55;
@@ -141,14 +240,31 @@
     padding: 9rem 4rem 7rem;
   }
 
-  .heroGameTitle {
-    font-size: 5rem;
+  .heroSiteTitle {
+    font-size: 7rem;
   }
 }
 
 @media (min-width: 1200px) {
-  .heroGameTitle {
-    font-size: 6.4rem;
+  .heroSiteTitle {
+    font-size: 9rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  .heroCollageTile1 {
+    right: 1rem;
+    width: 34rem;
+  }
+
+  .heroCollageTile2 {
+    right: 20rem;
+    width: 17rem;
+  }
+
+  .heroCollageTile4,
+  .heroCollageTile7 {
+    display: none;
   }
 }
 
@@ -163,28 +279,59 @@
     padding: 6rem 1rem 4rem;
   }
 
+  .heroCollage {
+    inset: 4.8rem 1rem 11rem;
+  }
+
+  .heroCollageTile1 {
+    top: 5rem;
+    right: 0;
+    width: 100%;
+  }
+
+  .heroCollageTile2 {
+    top: 1rem;
+    right: auto;
+    left: 0;
+    width: 46%;
+  }
+
+  .heroCollageTile3 {
+    right: 0;
+    bottom: 0;
+    width: 52%;
+  }
+
+  .heroCollageTile5 {
+    top: auto;
+    right: auto;
+    left: 6%;
+    bottom: 2.4rem;
+    width: 40%;
+  }
+
+  .heroCollageTile4,
+  .heroCollageTile6,
+  .heroCollageTile7 {
+    display: none;
+  }
+
   .heroScrim {
     background:
       linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0) 58%, rgba(0, 0, 0, 0.08) 100%),
       linear-gradient(90deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0));
   }
 
-  .heroGameTitle {
-    font-size: 2.5rem;
+  .heroBrandKicker {
+    font-size: 0.62rem;
   }
 
-  .heroGameAnnotation {
+  .heroSiteTitle {
+    font-size: 3.4rem;
+  }
+
+  .heroSiteSubtitle {
     font-size: 0.86rem;
     max-width: 22rem;
-  }
-}
-
-@keyframes cinematicDrift {
-  from {
-    transform: scale(1.02) translate3d(-1.2%, -0.8%, 0);
-  }
-
-  to {
-    transform: scale(1.1) translate3d(1.4%, 1%, 0);
   }
 }

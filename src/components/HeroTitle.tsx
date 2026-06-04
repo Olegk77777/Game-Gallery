@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { useIntro } from "./IntroContext";
 import styles from "@/app/page.module.css";
 
+const COLLAGE_TILE_COUNT = 7;
+
 interface HeroShot {
     id: string;
     src: string;
@@ -45,7 +47,13 @@ export default function HeroTitle({ shots }: HeroTitleProps) {
     const orderedShots = shotOrder.length === shots.length
         ? shotOrder.map((shotIndex) => shots[shotIndex])
         : shots;
-    const activeShot = orderedShots[activeIndex];
+    const collageTileCount = Math.min(COLLAGE_TILE_COUNT, orderedShots.length);
+    const collageShots = orderedShots.length > 0
+        ? Array.from({ length: collageTileCount }, (_, index) => {
+            const spreadOffset = Math.floor((index * orderedShots.length) / collageTileCount);
+            return orderedShots[(activeIndex + spreadOffset) % orderedShots.length];
+        })
+        : [];
 
     useEffect(() => {
         setActiveIndex(0);
@@ -68,38 +76,40 @@ export default function HeroTitle({ shots }: HeroTitleProps) {
                 );
                 return 0;
             });
-        }, 5600);
+        }, 3600);
 
         return () => window.clearInterval(timer);
     }, [isIntroComplete, shots.length]);
 
     return (
         <div className={styles.titleWrapper}>
-            {activeShot && (
-                <div className={styles.heroMedia} aria-hidden="true">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={activeShot.id}
-                            className={styles.heroFrame}
-                            initial={{ opacity: 0, scale: 1.08 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.03 }}
-                            transition={{ duration: 1.6, ease: [0.19, 1, 0.22, 1] }}
-                        >
-                            <Image
-                                src={activeShot.src}
-                                alt=""
-                                fill
-                                priority={activeIndex === 0}
-                                sizes="100vw"
-                                className={styles.heroImage}
-                            />
-                        </motion.div>
+            <div className={styles.heroMedia} aria-hidden="true">
+                <div className={styles.heroCollage}>
+                    <AnimatePresence>
+                        {collageShots.map((shot, index) => (
+                            <motion.div
+                                key={`${index}-${shot.id}`}
+                                className={`${styles.heroCollageTile} ${styles[`heroCollageTile${index + 1}`]}`}
+                                initial={{ opacity: 0, y: 18, scale: 0.96 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -14, scale: 0.98 }}
+                                transition={{ duration: 0.85, ease: [0.19, 1, 0.22, 1], delay: index * 0.04 }}
+                            >
+                                <Image
+                                    src={shot.src}
+                                    alt=""
+                                    fill
+                                    priority={index === 0}
+                                    sizes={index === 0 ? "(max-width: 760px) 92vw, 680px" : "(max-width: 760px) 46vw, 320px"}
+                                    className={styles.heroCollageImage}
+                                />
+                            </motion.div>
+                        ))}
                     </AnimatePresence>
-                    <div className={styles.heroScrim} />
-                    <div className={styles.heroLetterbox} />
                 </div>
-            )}
+                <div className={styles.heroScrim} />
+                <div className={styles.heroLetterbox} />
+            </div>
 
             <motion.div
                 className={styles.heroContent}
@@ -107,24 +117,32 @@ export default function HeroTitle({ shots }: HeroTitleProps) {
                 animate={isIntroComplete ? { opacity: 1, y: 0 } : { opacity: 0, y: 80 }}
                 transition={{ duration: 1.4, ease: [0.19, 1, 0.22, 1], delay: 0.25 }}
             >
+                <motion.p
+                    className={styles.heroBrandKicker}
+                    initial={{ opacity: 0 }}
+                    animate={isIntroComplete ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ duration: 0.9, delay: 0.35 }}
+                >
+                    Cinematic 21:9 frame archive
+                </motion.p>
                 <motion.h1
-                    className={styles.heroGameTitle}
+                    className={styles.heroSiteTitle}
+                    aria-label="Game Gallery"
                     initial={{ opacity: 0 }}
                     animate={isIntroComplete ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ duration: 1.1, delay: 0.45 }}
                 >
-                    {activeShot?.gameTitle ?? "Game Gallery"}
+                    <span aria-hidden="true">Game</span>
+                    <span aria-hidden="true">Gallery</span>
                 </motion.h1>
-                {activeShot?.annotation && (
-                    <motion.p
-                        className={styles.heroGameAnnotation}
-                        initial={{ opacity: 0, y: 18 }}
-                        animate={isIntroComplete ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
-                        transition={{ duration: 1.1, delay: 0.65 }}
-                    >
-                        {activeShot.annotation}
-                    </motion.p>
-                )}
+                <motion.p
+                    className={styles.heroSiteSubtitle}
+                    initial={{ opacity: 0 }}
+                    animate={isIntroComplete ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ duration: 0.9, delay: 0.62 }}
+                >
+                    A curated visual archive of game worlds, light, atmosphere and composition.
+                </motion.p>
             </motion.div>
         </div>
     );

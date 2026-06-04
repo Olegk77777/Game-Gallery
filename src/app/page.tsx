@@ -8,14 +8,20 @@ import styles from "./page.module.css";
 
 export default async function Home() {
   const games = await getGames();
-  const heroShots = games
-    .flatMap((game) =>
-      game.screenshots.map((shot) => ({
-        ...shot,
-        id: `${game.title}-${shot.id}`,
-        gameTitle: game.title,
-      }))
-    );
+  const maxScreenshotCount = Math.max(...games.map((game) => game.screenshots.length));
+  const heroShots = Array.from({ length: maxScreenshotCount }).flatMap((_, screenshotIndex) =>
+    games.flatMap((game) => {
+      const shot = game.screenshots[screenshotIndex];
+
+      return shot
+        ? [{
+          ...shot,
+          id: `${game.title}-${shot.id}`,
+          gameTitle: game.title,
+        }]
+        : [];
+    })
+  );
 
   return (
     <main className={styles.main}>
