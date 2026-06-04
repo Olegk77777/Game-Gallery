@@ -7,6 +7,8 @@ import { useIntro } from "./IntroContext";
 import styles from "@/app/page.module.css";
 
 const COLLAGE_TILE_COUNT = 5;
+const IMAGE_ROTATION_INTERVAL = 1900;
+const POSITION_ROTATION_INTERVAL = 7600;
 
 interface HeroShot {
     id: string;
@@ -53,6 +55,7 @@ export default function HeroTitle({ shots }: HeroTitleProps) {
     const [isClientReady, setIsClientReady] = useState(false);
     const [loadedSources, setLoadedSources] = useState<Set<string>>(() => new Set());
     const [readyTiles, setReadyTiles] = useState<Set<number>>(() => new Set());
+    const [slotOffset, setSlotOffset] = useState(0);
     const orderedShots = useMemo(
         () => createMixedOrder(shots).map((shotIndex) => shots[shotIndex]),
         [shots]
@@ -85,10 +88,20 @@ export default function HeroTitle({ shots }: HeroTitleProps) {
                     index === tileIndex ? (shotIndex + 1) % orderedShots.length : shotIndex
                 );
             });
-        }, 1900);
+        }, IMAGE_ROTATION_INTERVAL);
 
         return () => window.clearInterval(timer);
     }, [isClientReady, isIntroComplete, orderedShots.length, tileIndexes.length]);
+
+    useEffect(() => {
+        if (!isClientReady || !isIntroComplete || tileIndexes.length <= 1) return;
+
+        const timer = window.setInterval(() => {
+            setSlotOffset((current) => (current + 1) % tileIndexes.length);
+        }, POSITION_ROTATION_INTERVAL);
+
+        return () => window.clearInterval(timer);
+    }, [isClientReady, isIntroComplete, tileIndexes.length]);
 
     useEffect(() => {
         if (!isClientReady || !isIntroComplete || orderedShots.length <= 1 || tileIndexes.length === 0) return;
@@ -118,11 +131,14 @@ export default function HeroTitle({ shots }: HeroTitleProps) {
                         const imageSrc = shot.heroSrc ?? shot.src;
                         const isLoaded = loadedSources.has(imageSrc);
                         const isReady = readyTiles.has(index);
+                        const slotIndex = ((index + slotOffset) % collageShots.length) + 1;
 
                         return (
-                            <div
+                            <motion.div
+                                layout
                                 key={`tile-${index}`}
-                                className={`${styles.heroCollageTile} ${styles[`heroCollageTile${index + 1}`]} ${isReady ? styles.heroCollageTileLoaded : ""}`}
+                                className={`${styles.heroCollageTile} ${styles[`heroCollageTile${slotIndex}`]} ${isReady ? styles.heroCollageTileLoaded : ""}`}
+                                transition={{ layout: { duration: 1.45, ease: [0.22, 1, 0.36, 1] } }}
                             >
                                 <AnimatePresence mode="sync">
                                     <motion.div
@@ -158,7 +174,7 @@ export default function HeroTitle({ shots }: HeroTitleProps) {
                                         />
                                     </motion.div>
                                 </AnimatePresence>
-                            </div>
+                            </motion.div>
                         );
                     })}
                 </div>

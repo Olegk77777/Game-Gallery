@@ -85,10 +85,12 @@
   box-shadow: none;
   opacity: var(--tile-opacity, 1);
   transform-origin: center;
+  will-change: transform, opacity;
   transition:
     border-color 0.35s ease,
     box-shadow 0.35s ease,
-    background 0.35s ease;
+    background 0.35s ease,
+    opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .heroCollageTileLoaded {
@@ -135,26 +137,26 @@
 
 .heroCollageTile3 {
   right: 4rem;
-  bottom: 5rem;
-  z-index: 6;
+  bottom: 1.2rem;
+  z-index: 8;
   width: 24rem;
   aspect-ratio: 21 / 9;
   --tile-opacity: 0.86;
 }
 
 .heroCollageTile4 {
-  right: 38rem;
-  bottom: 2.8rem;
-  z-index: 4;
+  right: 31rem;
+  bottom: -1rem;
+  z-index: 6;
   width: 18rem;
   aspect-ratio: 21 / 9;
-  --tile-opacity: 0.62;
+  --tile-opacity: 0.68;
 }
 
 .heroCollageTile5 {
   top: 20.5rem;
   right: 17rem;
-  z-index: 8;
+  z-index: 9;
   width: 15rem;
   aspect-ratio: 21 / 9;
   --tile-opacity: 0.78;
