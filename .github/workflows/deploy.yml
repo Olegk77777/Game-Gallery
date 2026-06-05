@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # полная история нужна для сортировки альбомов по дате git-коммита
 
       - name: Detect package manager
         id: detect-package-manager

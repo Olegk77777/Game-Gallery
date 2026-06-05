@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'child_process';
 
 export interface Screenshot {
     id: string;
@@ -106,12 +107,37 @@ export async function getGames(): Promise<Game[]> {
         }
     }
 
-    // Sort games by title
-    games.sort((a, b) => {
-        if (a.title === "The Witcher 3 Wild Hunt") return -1;
-        if (b.title === "The Witcher 3 Wild Hunt") return 1;
-        return a.title.localeCompare(b.title);
-    });
+    // Сортируем альбомы по свежести: чем недавнее обновление папки (новый альбом
+    // или добавленный в него кадр), тем выше. Основной сигнал — время последнего
+    // git-коммита, затронувшего папку игры (переживает сборку на CI, в отличие от
+    // mtime файлов). Фолбэк по mtime — для незакоммиченных папок и окружений без git.
+    const freshnessOf = (gameTitle: string): number => {
+        try {
+            const out = execFileSync(
+                'git',
+                ['log', '-1', '--format=%ct', '--', path.join('public', 'gallery', gameTitle)],
+                { cwd: process.cwd(), stdio: ['ignore', 'pipe', 'ignore'] }
+            ).toString().trim();
+            const ts = Number.parseInt(out, 10);
+            if (Number.isFinite(ts) && ts > 0) return ts;
+        } catch {
+            // git недоступен или папка ещё не закоммичена — переходим к mtime
+        }
+        try {
+            let newest = 0;
+            const absDir = path.join(GALLERY_DIR, gameTitle);
+            for (const file of fs.readdirSync(absDir)) {
+                const m = fs.statSync(path.join(absDir, file)).mtimeMs / 1000;
+                if (m > newest) newest = m;
+            }
+            return newest;
+        } catch {
+            return 0;
+        }
+    };
+
+    const freshness = new Map(games.map((game) => [game.title, freshnessOf(game.title)]));
+    games.sort((a, b) => (freshness.get(b.title) ?? 0) - (freshness.get(a.title) ?? 0));
 
     return games;
 }

@@ -58,6 +58,13 @@ const GAME_META: Record<string, Omit<GalleryGame, "id" | "shots">> = {
     year: 2018,
     accent: "#bfa07a",
   },
+  "Forza Horizon 6": {
+    title: "Forza Horizon 6",
+    full: "Forza Horizon 6",
+    place: "Japan",
+    year: 2026,
+    accent: "#d98a5b",
+  },
 };
 
 function slugify(value: string, fallback: string) {
