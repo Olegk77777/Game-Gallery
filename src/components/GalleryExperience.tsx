@@ -464,7 +464,6 @@ function AlbumView({
           game={game}
           index={Math.max(0, Math.min(shotIndex, game.shots.length - 1))}
           onClose={() => setHash(`/a/${encodeURIComponent(game.id)}`)}
-          onIndex={(index) => setHash(`/a/${encodeURIComponent(game.id)}/${index}`)}
         />
       )}
     </div>
@@ -488,17 +487,27 @@ function Carousel3D({
   onOpen: (index: number) => void;
 }) {
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const drag = useRef<{ x: number; startPos: number; moved: boolean } | null>(null);
+  const drag = useRef<{
+    x: number;
+    startPos: number;
+    moved: boolean;
+    lastT: number;
+    vel: number;
+    stoppedSpin: boolean;
+  } | null>(null);
   const suppressClick = useRef(false);
-  const wheelLock = useRef(false);
+  const posRef = useRef(0);
+  const velocity = useRef(0);
+  const momentumRef = useRef<number | null>(null);
   const [dim, setDim] = useState({ w: 1200, h: 480 });
   const [pos, setPos] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [spinning, setSpinning] = useState(false);
 
   const realCount = shots.length;
   const slotCount = realCount >= 6 ? realCount : realCount * Math.max(2, Math.ceil(7 / realCount));
   const step = 360 / slotCount;
-  const cardWidth = Math.max(220, Math.min(470, dim.w * 0.52, dim.h * 1.7));
+  const cardWidth = Math.max(280, Math.min(980, dim.w * 0.62, dim.h * 2));
   const cardHeight = (cardWidth * 9) / 21;
   const radius = cardWidth / 2 / Math.tan((step / 2) * Math.PI / 180);
   const rotation = pos * step;
@@ -522,26 +531,93 @@ function Carousel3D({
     };
   }, []);
 
+  const stopMomentum = useCallback(() => {
+    if (momentumRef.current != null) {
+      cancelAnimationFrame(momentumRef.current);
+      momentumRef.current = null;
+    }
+    velocity.current = 0;
+  }, []);
+
+  // Доводим барабан до ближайшей карточки и возвращаем плавную CSS-анимацию.
+  const settle = useCallback(() => {
+    setSpinning(false);
+    const target = Math.round(posRef.current);
+    posRef.current = target;
+    setPos(target);
+  }, []);
+
+  // Свободный ход по инерции: каждый кадр двигаем барабан и гасим скорость трением.
+  // Скорость живёт в velocity.current, поэтому её можно подкручивать на лету (колесо, повторный бросок).
+  const runMomentum = useCallback(() => {
+    if (momentumRef.current != null) return;
+    setSpinning(true);
+    let last = performance.now();
+
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      posRef.current += velocity.current * dt;
+      setPos(posRef.current);
+      // Экспоненциальное трение: за секунду скорость падает примерно до 12%.
+      velocity.current *= Math.pow(0.12, dt);
+
+      if (Math.abs(velocity.current) < 0.5) {
+        momentumRef.current = null;
+        velocity.current = 0;
+        settle();
+        return;
+      }
+      momentumRef.current = requestAnimationFrame(tick);
+    };
+
+    momentumRef.current = requestAnimationFrame(tick);
+  }, [settle]);
+
+  // Толчок маховика: и бросок мышью, и щелчок колеса добавляют скорость в общий механизм инерции.
+  const addSpin = useCallback(
+    (dv: number) => {
+      velocity.current = Math.max(-26, Math.min(26, velocity.current + dv));
+      runMomentum();
+    },
+    [runMomentum]
+  );
+
+  useEffect(() => () => stopMomentum(), [stopMomentum]);
+
   useEffect(() => {
     if (!dragging) return;
 
-    const sensitivity = Math.max(60, cardWidth * 0.55);
+    const sensitivity = Math.max(70, cardWidth * 0.42);
     const move = (event: MouseEvent | globalThis.TouchEvent) => {
       if (!drag.current) return;
       const x = "touches" in event ? event.touches[0]?.clientX ?? 0 : event.clientX;
+      const now = performance.now();
       const delta = x - drag.current.x;
 
       if (Math.abs(delta) > 4) drag.current.moved = true;
-      setPos(drag.current.startPos - delta / sensitivity);
+      const newPos = drag.current.startPos - delta / sensitivity;
+      const dt = Math.max(0.001, (now - drag.current.lastT) / 1000);
+      const instant = (newPos - posRef.current) / dt;
+      // Сглаживаем скорость, чтобы «бросок» считался по последнему движению.
+      drag.current.vel = drag.current.vel * 0.6 + instant * 0.4;
+      drag.current.lastT = now;
+      posRef.current = newPos;
+      setPos(newPos);
     };
     const up = () => {
       setDragging(false);
-      setPos((value) => Math.round(value));
-      suppressClick.current = Boolean(drag.current?.moved);
+      const info = drag.current;
+      drag.current = null;
+      suppressClick.current = Boolean(info?.moved || info?.stoppedSpin);
       window.setTimeout(() => {
         suppressClick.current = false;
       }, 60);
-      drag.current = null;
+
+      const v = info?.vel ?? 0;
+      // Резкий бросок — пускаем по инерции, плавное движение — просто доводим до карточки.
+      if (Math.abs(v) > 1.4) addSpin(v);
+      else settle();
     };
 
     window.addEventListener("mousemove", move);
@@ -555,11 +631,18 @@ function Carousel3D({
       window.removeEventListener("touchmove", move);
       window.removeEventListener("touchend", up);
     };
-  }, [cardWidth, dragging]);
+  }, [cardWidth, dragging, settle, addSpin]);
 
-  const go = useCallback((direction: number) => {
-    setPos((value) => Math.round(value) + direction);
-  }, []);
+  const go = useCallback(
+    (direction: number) => {
+      stopMomentum();
+      setSpinning(false);
+      const target = Math.round(posRef.current) + direction;
+      posRef.current = target;
+      setPos(target);
+    },
+    [stopMomentum]
+  );
 
   useEffect(() => {
     if (!keyboardEnabled) return;
@@ -575,7 +658,9 @@ function Carousel3D({
   }, [activeReal, go, keyboardEnabled, onOpen]);
 
   const goToReal = (index: number) => {
-    const current = Math.round(pos);
+    stopMomentum();
+    setSpinning(false);
+    const current = Math.round(posRef.current);
     let best = current;
     let bestDistance = Number.POSITIVE_INFINITY;
 
@@ -590,29 +675,49 @@ function Carousel3D({
       }
     }
 
+    posRef.current = best;
     setPos(best);
   };
 
   const onDown = (event: React.MouseEvent<HTMLDivElement> | TouchEvent<HTMLDivElement>) => {
-    drag.current = { x: getPointerX(event), startPos: pos, moved: false };
+    // Если барабан летел по инерции — это касание его останавливает (и не считается кликом).
+    const wasSpinning = momentumRef.current != null;
+    stopMomentum();
+    const x = getPointerX(event);
+    drag.current = {
+      x,
+      startPos: posRef.current,
+      moved: false,
+      lastT: performance.now(),
+      vel: 0,
+      stoppedSpin: wasSpinning,
+    };
+    setSpinning(true);
     setDragging(true);
   };
 
   const onWheel = (event: WheelEvent<HTMLDivElement>) => {
-    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    if (Math.abs(delta) < 8 || wheelLock.current) return;
+    const raw = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    if (Math.abs(raw) < 1) return;
 
-    wheelLock.current = true;
-    setPos((value) => Math.round(value) + (delta > 0 ? 1 : -1));
-    window.setTimeout(() => {
-      wheelLock.current = false;
-    }, 340);
+    // Колесо мыши шлёт «строки», трекпад — пиксели; приводим всё к пикселям.
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? dim.h || 800 : 1;
+    const px = raw * unit;
+    // Прокрутка подкручивает тот же маховик, что и перетаскивание, — отсюда инерция и плавность.
+    const impulse = Math.sign(px) * Math.min(3, Math.abs(px) / 48);
+    addSpin(impulse);
   };
 
   const handleClick = (slot: number) => {
     if (suppressClick.current) return;
-    if (slot === frontSlot) onOpen(slot % realCount);
-    else setPos(slot);
+    if (slot === frontSlot) {
+      onOpen(slot % realCount);
+    } else {
+      stopMomentum();
+      setSpinning(false);
+      posRef.current = slot;
+      setPos(slot);
+    }
   };
 
   return (
@@ -626,7 +731,7 @@ function Carousel3D({
         style={accentStyle(accent)}
       >
         <div
-          className={`ring${dragging ? " dragging" : ""}`}
+          className={`ring${spinning ? " dragging" : ""}`}
           style={{ transform: `translateZ(${-radius}px) rotateY(${-rotation}deg)` }}
         >
           {Array.from({ length: slotCount }, (_, slot) => {
@@ -651,7 +756,7 @@ function Carousel3D({
                   transform: `rotateY(${slot * step}deg) translateZ(${radius}px) scale(${scale})`,
                   opacity,
                   filter: isFront ? "none" : "brightness(0.78)",
-                  transition: dragging
+                  transition: spinning
                     ? "opacity .15s linear, transform .15s linear"
                     : "transform .55s var(--ease-soft), opacity .5s ease, filter .5s ease",
                   pointerEvents: absFace >= 80 ? "none" : "auto",
@@ -678,9 +783,6 @@ function Carousel3D({
       </div>
 
       <div className="av-controls">
-        <button className="navbtn" type="button" onClick={() => go(-1)} aria-label="Previous">
-          ‹
-        </button>
         <div className="dots">
           {shots.map((shot, index) => (
             <button
@@ -692,9 +794,6 @@ function Carousel3D({
             />
           ))}
         </div>
-        <button className="navbtn" type="button" onClick={() => go(1)} aria-label="Next">
-          ›
-        </button>
       </div>
     </>
   );
@@ -704,83 +803,68 @@ function Lightbox({
   game,
   index,
   onClose,
-  onIndex,
 }: {
   game: GalleryGame;
   index: number;
   onClose: () => void;
-  onIndex: (index: number) => void;
 }) {
   const [shown, setShown] = useState(false);
-  const [offset, setOffset] = useState<{ dx: number; dy: number } | null>(null);
+  const [offset, setOffset] = useState<{ dy: number } | null>(null);
   const drag = useRef<{ x0: number; y0: number; dx: number; dy: number } | null>(null);
   const shot = game.shots[index];
-
-  const next = useCallback(() => onIndex((index + 1) % game.shots.length), [game.shots.length, index, onIndex]);
-  const prev = useCallback(
-    () => onIndex((index - 1 + game.shots.length) % game.shots.length),
-    [game.shots.length, index, onIndex]
-  );
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setShown(true));
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
+  const close = useCallback(() => {
+    setShown(false);
+    window.setTimeout(onClose, 380);
+  }, [onClose]);
+
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-      if (event.key === "ArrowRight") next();
-      if (event.key === "ArrowLeft") prev();
+      if (event.key === "Escape") close();
     };
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [next, onClose, prev]);
-
-  const close = () => {
-    setShown(false);
-    window.setTimeout(onClose, 380);
-  };
+  }, [close]);
 
   const onDown = (event: PointerEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
-    if (target.closest("button") || target.closest(".lb-thumb")) return;
+    if (target.closest("button")) return;
 
     drag.current = { x0: event.clientX, y0: event.clientY, dx: 0, dy: 0 };
-    setOffset({ dx: 0, dy: 0 });
+    setOffset({ dy: 0 });
   };
 
   const onMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!drag.current) return;
-    const dx = event.clientX - drag.current.x0;
-    const dy = event.clientY - drag.current.y0;
 
-    drag.current.dx = dx;
-    drag.current.dy = dy;
-    setOffset({ dx, dy });
+    drag.current.dx = event.clientX - drag.current.x0;
+    drag.current.dy = event.clientY - drag.current.y0;
+    setOffset({ dy: drag.current.dy });
   };
 
   const onUp = () => {
     if (!drag.current) return;
 
-    const current = { dx: drag.current.dx, dy: drag.current.dy };
+    const { dx, dy } = drag.current;
     drag.current = null;
     setOffset(null);
 
-    if (Math.abs(current.dx) > 70 && Math.abs(current.dx) > Math.abs(current.dy)) {
-      if (current.dx < 0) next();
-      else prev();
-      return;
-    }
-
-    if (current.dy > 110 && current.dy > Math.abs(current.dx)) close();
+    // Палец/курсор почти не двигался — это клик по кадру: сворачиваем обратно в барабан.
+    const moved = Math.abs(dx) > 10 || Math.abs(dy) > 10;
+    // Либо потянули кадр вниз — тоже закрываем.
+    if (!moved || (dy > 90 && dy > Math.abs(dx))) close();
   };
 
   const dragStyle = offset
     ? {
-        transform: `translate(${offset.dx}px, ${Math.max(0, offset.dy) * 0.5}px) scale(${
-          1 - Math.min(Math.abs(offset.dx), 160) / 1500
+        transform: `translateY(${Math.max(0, offset.dy) * 0.5}px) scale(${
+          1 - Math.min(Math.max(0, offset.dy), 320) / 1600
         })`,
         transition: "none",
         opacity: 1 - Math.min(Math.max(0, offset.dy), 320) / 680,
@@ -802,32 +886,12 @@ function Lightbox({
       </div>
 
       <div className="lb-stage" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
-        <button className="lb-arrow prev" type="button" onClick={prev} aria-label="Previous">
-          ‹
-        </button>
         <img className="lb-img" key={shot.id} src={shot.fullSrc} alt={shot.annotation} style={dragStyle} draggable="false" />
-        <button className="lb-arrow next" type="button" onClick={next} aria-label="Next">
-          ›
-        </button>
-        <div className="lb-hint">Swipe to browse · down to close</div>
+        <div className="lb-hint">Click frame to return to carousel</div>
       </div>
 
       <div className="lb-cap">
         <span className="c">{shot.annotation}</span>
-      </div>
-
-      <div className="lb-strip">
-        {game.shots.map((item, itemIndex) => (
-          <button
-            key={item.id}
-            className={`lb-thumb${itemIndex === index ? " on" : ""}`}
-            type="button"
-            onClick={() => onIndex(itemIndex)}
-            aria-label={`Open frame ${itemIndex + 1}`}
-          >
-            <img src={item.thumbSrc ?? item.displaySrc} alt="" />
-          </button>
-        ))}
       </div>
     </div>
   );

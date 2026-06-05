@@ -904,13 +904,9 @@ html[data-grain="off"] .grain {
   align-items: center;
   justify-content: center;
   padding: 0 88px;
-  cursor: grab;
+  cursor: zoom-out;
   touch-action: none;
   user-select: none;
-}
-
-.lb-stage:active {
-  cursor: grabbing;
 }
 
 .lb-img {
@@ -922,7 +918,7 @@ html[data-grain="off"] .grain {
   box-shadow: 0 50px 120px -40px rgba(0, 0, 0, 0.9);
   object-fit: contain;
   opacity: 0;
-  transform: scale(0.96);
+  transform: scale(0.86);
   transition: transform var(--dur-base) var(--ease-soft), opacity var(--dur-base);
 }
 
@@ -931,42 +927,11 @@ html[data-grain="off"] .grain {
   transform: scale(1);
 }
 
-.lb-arrow {
-  position: absolute;
-  top: 50%;
-  z-index: 4;
-  display: flex;
-  width: 54px;
-  height: 54px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid transparent;
-  border-radius: 50%;
-  color: var(--ink-2);
-  font-size: 20px;
-  transform: translateY(-50%);
-  transition: color var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease), background var(--dur-micro) var(--ease);
-}
-
-.lb-arrow:hover {
-  border-color: var(--line);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--ink);
-}
-
-.lb-arrow.prev {
-  left: 22px;
-}
-
-.lb-arrow.next {
-  right: 22px;
-}
-
 .lb-hint {
   position: absolute;
   bottom: 12px;
   left: 50%;
-  display: none;
+  display: block;
   color: var(--ink-4);
   font-size: 10.5px;
   letter-spacing: 0.18em;
@@ -986,44 +951,6 @@ html[data-grain="off"] .grain {
   font-family: var(--font-display);
   font-size: clamp(17px, 1.9vw, 22px);
   font-style: italic;
-}
-
-.lb-strip {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  overflow: hidden;
-  padding: 10px 40px 26px;
-}
-
-.lb-thumb {
-  position: relative;
-  height: 54px;
-  flex: 0 0 auto;
-  overflow: hidden;
-  aspect-ratio: 21 / 9;
-  border: 1px solid var(--line-2);
-  opacity: 0.42;
-  filter: grayscale(0.4);
-  transition: opacity 0.35s var(--ease), filter 0.35s var(--ease), border-color 0.35s var(--ease);
-}
-
-.lb-thumb:hover {
-  opacity: 0.8;
-}
-
-.lb-thumb.on {
-  border-color: var(--ink);
-  opacity: 1;
-  filter: none;
-}
-
-.lb-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .preloader {
@@ -1213,22 +1140,6 @@ html[data-grain="off"] .grain {
 
   .lb-stage {
     padding: 0 16px;
-  }
-
-  .lb-arrow.prev {
-    left: 4px;
-  }
-
-  .lb-arrow.next {
-    right: 4px;
-  }
-
-  .lb-strip {
-    display: none;
-  }
-
-  .lb-hint {
-    display: block;
   }
 
   .preloader {
