@@ -83,7 +83,7 @@ function assetPath(pathname: string | undefined) {
 }
 
 function toGalleryGame(game: SourceGame, index: number): GalleryGame {
-  const meta = GAME_META[game.title] ?? {
+  const meta: Omit<GalleryGame, "id" | "shots"> = GAME_META[game.title] ?? {
     title: game.title,
     full: game.title,
     place: "Curated archive",
@@ -91,25 +91,35 @@ function toGalleryGame(game: SourceGame, index: number): GalleryGame {
     accent: ["#e6a15c", "#cdd66b", "#e2c84b", "#bfa07a"][index % 4],
   };
 
+  const shots = game.screenshots.map((shot) => {
+    const src = assetPath(shot.src) ?? "";
+    const previewSrc = assetPath(shot.previewSrc);
+    const thumbSrc = assetPath(shot.thumbSrc);
+    const heroSrc = assetPath(shot.heroSrc);
+
+    return {
+      ...shot,
+      src,
+      previewSrc,
+      thumbSrc,
+      heroSrc,
+      displaySrc: previewSrc ?? heroSrc ?? src,
+      fullSrc: src,
+    };
+  });
+
+  // Кадр-обложку поднимаем в начало, чтобы барабан стартовал именно с него.
+  if (meta.cover) {
+    const coverIndex = shots.findIndex((shot) => shot.id === meta.cover);
+    if (coverIndex > 0) {
+      shots.unshift(shots.splice(coverIndex, 1)[0]);
+    }
+  }
+
   return {
     id: slugify(game.title, `game-${index + 1}`),
     ...meta,
-    shots: game.screenshots.map((shot) => {
-      const src = assetPath(shot.src) ?? "";
-      const previewSrc = assetPath(shot.previewSrc);
-      const thumbSrc = assetPath(shot.thumbSrc);
-      const heroSrc = assetPath(shot.heroSrc);
-
-      return {
-        ...shot,
-        src,
-        previewSrc,
-        thumbSrc,
-        heroSrc,
-        displaySrc: previewSrc ?? heroSrc ?? src,
-        fullSrc: src,
-      };
-    }),
+    shots,
   };
 }
 
