@@ -18,6 +18,7 @@ type GalleryGame = {
   place: string;
   year: number;
   accent: string;
+  cover?: string; // имя файла кадра-обложки; если не задано — берётся первый кадр
   shots: GalleryShot[];
 };
 
@@ -48,6 +49,7 @@ const GAME_META: Record<string, Omit<GalleryGame, "id" | "shots">> = {
     place: "Night City",
     year: 2020,
     accent: "#e2c84b",
+    cover: "Cyberpunk 2077® 2026.06.05 - 19.43.16.09 копия.jpg",
   },
   "Kingdom Come Deliverance": {
     title: "Kingdom Come",
@@ -342,7 +344,8 @@ function Collections({ games }: { games: GalleryGame[] }) {
 
       {games.map((game, index) => {
         const empty = game.shots.length === 0;
-        const cover = game.shots[0];
+        const cover =
+          (game.cover && game.shots.find((shot) => shot.id === game.cover)) || game.shots[0];
 
         return (
           <button
