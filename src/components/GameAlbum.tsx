@@ -25,6 +25,8 @@ interface GameAlbumProps {
     title: string;
     screenshots: Screenshot[];
     index: number;
+    isOpen: boolean;
+    onToggle: () => void;
 }
 
 function getWrappedOffset(index: number, selectedIndex: number, total: number) {
@@ -41,8 +43,7 @@ function getWrappedOffset(index: number, selectedIndex: number, total: number) {
     return directOffset;
 }
 
-export default function GameAlbum({ title, screenshots, index }: GameAlbumProps) {
-    const [isOpen, setIsOpen] = useState(false);
+export default function GameAlbum({ title, screenshots, index, isOpen, onToggle }: GameAlbumProps) {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const { playHover, playClick } = useSound();
     const coverShot = screenshots[0];
@@ -69,6 +70,12 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
             return (current + direction + screenshots.length) % screenshots.length;
         });
     }, [screenshots.length]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setSelectedIndex(null);
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (selectedIndex === null) return;
@@ -105,7 +112,7 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                     type="button"
                     className={`${styles.header} cursor-hover`}
                     onClick={() => {
-                        setIsOpen(!isOpen);
+                        onToggle();
                         playClick();
                     }}
                     onMouseEnter={playHover}
