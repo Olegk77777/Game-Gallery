@@ -507,7 +507,7 @@ function Carousel3D({
   const realCount = shots.length;
   const slotCount = realCount >= 6 ? realCount : realCount * Math.max(2, Math.ceil(7 / realCount));
   const step = 360 / slotCount;
-  const cardWidth = Math.max(280, Math.min(980, dim.w * 0.62, dim.h * 2));
+  const cardWidth = Math.max(280, Math.min(1180, dim.w * 0.64, dim.h * 1.92));
   const cardHeight = (cardWidth * 9) / 21;
   const radius = cardWidth / 2 / Math.tan((step / 2) * Math.PI / 180);
   const rotation = pos * step;
