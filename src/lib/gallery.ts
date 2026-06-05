@@ -4,6 +4,8 @@ import path from 'path';
 export interface Screenshot {
     id: string;
     src: string;
+    previewSrc?: string;
+    thumbSrc?: string;
     heroSrc?: string;
     annotation: string;
 }
@@ -14,6 +16,24 @@ export interface Game {
 }
 
 const GALLERY_DIR = path.join(process.cwd(), 'public', 'gallery');
+const PUBLIC_DIR = path.join(process.cwd(), 'public');
+const HERO_GALLERY_DIR = path.join(PUBLIC_DIR, 'hero-gallery');
+const OPTIMIZED_GALLERY_DIR = path.join(PUBLIC_DIR, 'optimized-gallery');
+
+function withBasePath(pathname: string) {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    return `${basePath}${pathname}`;
+}
+
+function getExistingOptimizedPath(gameTitle: string, imageFile: string, variant: string) {
+    const imageName = path.parse(imageFile).name;
+    const optimizedImageFile = `${imageName}-${variant}.webp`;
+    const optimizedImagePath = path.join(OPTIMIZED_GALLERY_DIR, gameTitle, optimizedImageFile);
+
+    return fs.existsSync(optimizedImagePath)
+        ? withBasePath(`/optimized-gallery/${gameTitle}/${optimizedImageFile}`)
+        : null;
+}
 
 export async function getGames(): Promise<Game[]> {
     // Ensure gallery directory exists
@@ -42,14 +62,15 @@ export async function getGames(): Promise<Game[]> {
         const screenshots: Screenshot[] = [];
 
         for (const imageFile of imageFiles) {
-            const imagePath = path.join(gamePath, imageFile);
-            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-            const relativePath = `${basePath}/gallery/${gameTitle}/${imageFile}`;
+            const originalPath = withBasePath(`/gallery/${gameTitle}/${imageFile}`);
             const heroImageFile = imageFile.replace(/\.(jpg|jpeg|png|webp)$/i, '.jpg');
-            const heroImagePath = path.join(process.cwd(), 'public', 'hero-gallery', gameTitle, heroImageFile);
+            const heroImagePath = path.join(HERO_GALLERY_DIR, gameTitle, heroImageFile);
             const heroRelativePath = fs.existsSync(heroImagePath)
-                ? `${basePath}/hero-gallery/${gameTitle}/${heroImageFile}`
-                : relativePath;
+                ? withBasePath(`/hero-gallery/${gameTitle}/${heroImageFile}`)
+                : originalPath;
+            const fullPath = getExistingOptimizedPath(gameTitle, imageFile, 'full') ?? originalPath;
+            const previewPath = getExistingOptimizedPath(gameTitle, imageFile, 'card') ?? heroRelativePath;
+            const thumbPath = getExistingOptimizedPath(gameTitle, imageFile, 'thumb') ?? previewPath;
 
             // Check for corresponding text file
             const txtFile = imageFile.replace(/\.(jpg|jpeg|png|webp)$/i, '.txt');
@@ -66,7 +87,9 @@ export async function getGames(): Promise<Game[]> {
 
 	            screenshots.push({
 	                id: imageFile, // Use filename as ID
-	                src: relativePath,
+	                src: fullPath,
+                    previewSrc: previewPath,
+                    thumbSrc: thumbPath,
                     heroSrc: heroRelativePath,
 	                annotation: annotation
 	            });

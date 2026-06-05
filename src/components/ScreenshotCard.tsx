@@ -7,14 +7,16 @@ const MotionImage = motion(Image);
 
 interface ScreenshotCardProps {
     src: string;
+    previewSrc?: string;
     alt: string;
     annotation: string;
     onClick?: () => void;
     layoutId?: string;
 }
 
-export default function ScreenshotCard({ src, alt, annotation, onClick, layoutId }: ScreenshotCardProps) {
+export default function ScreenshotCard({ src, previewSrc, alt, annotation, onClick, layoutId }: ScreenshotCardProps) {
     const { playHover, playClick } = useSound();
+    const imageSrc = previewSrc ?? src;
 
     return (
         <motion.button
@@ -33,7 +35,7 @@ export default function ScreenshotCard({ src, alt, annotation, onClick, layoutId
             <div className={styles.imageWrapper}>
                 <MotionImage
                     layoutId={layoutId}
-                    src={src}
+                    src={imageSrc}
                     alt={alt}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/sync-gallery.js",
+    "predev": "npm run optimize-gallery && npm run sync-gallery",
     "dev": "next dev",
-    "prebuild": "node scripts/sync-gallery.js",
+    "prebuild": "npm run optimize-gallery && npm run sync-gallery",
     "build": "next build",
     "start": "next start",
+    "optimize-gallery": "node scripts/optimize-gallery.js",
+    "sync-gallery": "node scripts/sync-gallery.js",
     "lint": "eslint"
   },
   "dependencies": {

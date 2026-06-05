@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const path = require('path');
 
 const GALLERY_DIR = path.join(process.cwd(), 'public', 'gallery');
 const HERO_GALLERY_DIR = path.join(process.cwd(), 'public', 'hero-gallery');
+const OPTIMIZED_GALLERY_DIR = path.join(process.cwd(), 'public', 'optimized-gallery');
 const OUTPUT_FILE = path.join(process.cwd(), 'src', 'data', 'games.json');
 
 // Ensure gallery directory exists
@@ -48,18 +50,25 @@ function getGames() {
                             annotation = fs.readFileSync(txtPath, 'utf-8').trim();
                         }
 
-	                        // Create relative path for src
-	                        const relativePath = path.relative(path.join(process.cwd(), 'public'), filePath);
-                            const heroRelativeFile = path.relative(GALLERY_DIR, filePath).replace(/\.(jpg|jpeg|png|webp|gif)$/i, '.jpg');
+	                        // Create relative paths for display assets
+	                        const relativePath = path.relative(path.join(process.cwd(), 'public'), filePath).split(path.sep).join('/');
+                            const relativeGalleryPath = path.relative(GALLERY_DIR, filePath);
+                            const originalPath = `/${relativePath}`;
+                            const heroRelativeFile = relativeGalleryPath.replace(/\.(jpg|jpeg|png|webp|gif)$/i, '.jpg');
                             const heroFilePath = path.join(HERO_GALLERY_DIR, heroRelativeFile);
                             const heroRelativePath = fs.existsSync(heroFilePath)
-                                ? path.relative(path.join(process.cwd(), 'public'), heroFilePath)
-                                : relativePath;
+                                ? toPublicPath(heroFilePath)
+                                : originalPath;
+                            const fullPath = getOptimizedPath(relativeGalleryPath, 'full') ?? originalPath;
+                            const previewPath = getOptimizedPath(relativeGalleryPath, 'card') ?? heroRelativePath;
+                            const thumbPath = getOptimizedPath(relativeGalleryPath, 'thumb') ?? previewPath;
 
 	                        game.screenshots.push({
 	                            id: imageId,
-	                            src: `/${relativePath}`,
-                                heroSrc: `/${heroRelativePath}`,
+	                            src: fullPath,
+                                previewSrc: previewPath,
+                                thumbSrc: thumbPath,
+                                heroSrc: heroRelativePath,
 	                            annotation: annotation
 	                        });
                     }
@@ -76,6 +85,17 @@ function getGames() {
     }
 
     return games;
+}
+
+function toPublicPath(filePath) {
+    return `/${path.relative(path.join(process.cwd(), 'public'), filePath).split(path.sep).join('/')}`;
+}
+
+function getOptimizedPath(relativeGalleryPath, variant) {
+    const parsedPath = path.parse(relativeGalleryPath);
+    const optimizedPath = path.join(OPTIMIZED_GALLERY_DIR, parsedPath.dir, `${parsedPath.name}-${variant}.webp`);
+
+    return fs.existsSync(optimizedPath) ? toPublicPath(optimizedPath) : null;
 }
 
 try {

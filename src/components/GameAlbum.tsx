@@ -15,6 +15,9 @@ import GlitchText from "./GlitchText";
 interface Screenshot {
     id: string;
     src: string;
+    previewSrc?: string;
+    thumbSrc?: string;
+    heroSrc?: string;
     annotation: string;
 }
 
@@ -44,6 +47,7 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
     const { playHover, playClick } = useSound();
     const coverShot = screenshots[0];
     const selectedShot = selectedIndex !== null ? screenshots[selectedIndex] : null;
+    const coverSrc = coverShot ? coverShot.previewSrc ?? coverShot.heroSrc ?? coverShot.src : "";
     const filmstripItems = selectedIndex === null
         ? []
         : screenshots
@@ -114,7 +118,7 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                     {coverShot && (
                         <div className={styles.coverImage} aria-hidden="true">
                             <Image
-                                src={coverShot.src}
+                                src={coverSrc}
                                 alt=""
                                 fill
                                 sizes="(max-width: 768px) 100vw, 1600px"
@@ -200,6 +204,7 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                                     >
                                         <ScreenshotCard
                                             src={shot.src}
+                                            previewSrc={shot.previewSrc ?? shot.heroSrc}
                                             alt={`${title} screenshot`}
                                             annotation={shot.annotation}
                                             onClick={() => setSelectedIndex(index)}
@@ -348,7 +353,7 @@ export default function GameAlbum({ title, screenshots, index }: GameAlbumProps)
                                                 aria-label={`Open image ${shotIndex + 1}`}
                                             >
                                                 <Image
-                                                    src={shot.src}
+                                                    src={shot.thumbSrc ?? shot.previewSrc ?? shot.heroSrc ?? shot.src}
                                                     alt=""
                                                     fill
                                                     sizes="96px"
