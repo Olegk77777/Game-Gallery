@@ -268,13 +268,16 @@ function SoundOffIcon() {
 }
 
 function Hero({ games }: { games: GalleryGame[] }) {
-  const featured = useMemo(
+  const baseFeatured = useMemo(
     () =>
       games
         .flatMap((game) => game.shots.slice(0, 2).map((shot) => ({ game, shot })))
         .slice(0, 6),
     [games]
   );
+  // Порядок кадров в шапке. На сервере (статический экспорт) — детерминированный,
+  // иначе будет рассинхрон гидрации. Перемешиваем уже на клиенте, в useEffect ниже.
+  const [featured, setFeatured] = useState(baseFeatured);
   const [active, setActive] = useState(0);
   const [shown, setShown] = useState(false);
   const current = featured[active] ?? featured[0];
@@ -283,6 +286,21 @@ function Hero({ games }: { games: GalleryGame[] }) {
     const frame = window.requestAnimationFrame(() => setShown(true));
     return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  // После загрузки тасуем кадры (Фишер–Йейтс), чтобы каждый раз был свой порядок.
+  // setState откладываем в rAF — тот же приём, что и для setShown выше.
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const shuffled = [...baseFeatured];
+      for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      setFeatured(shuffled);
+      setActive(0);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [baseFeatured]);
 
   useEffect(() => {
     if (featured.length <= 1) return;
