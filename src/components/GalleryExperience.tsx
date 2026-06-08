@@ -172,6 +172,40 @@ function useBodyLock(active: boolean) {
   }, [active]);
 }
 
+// Уважаем системную настройку «уменьшить движение»: при ней отключаем
+// курсорные эффекты (CSS-анимации глушит глобальный @media-блок).
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return reduced;
+}
+
+// Указатель есть только на десктопе (мышь/трекпад). На тач-экранах курсорные
+// эффекты не имеют смысла и просто тратят ресурсы — там их не включаем.
+function hasFinePointer() {
+  return typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches;
+}
+
+// Разные траектории «дрейфа» (Ken Burns) для кадров шапки — чтобы каждый кадр
+// жил по-своему: своя точка отсчёта масштаба и направление сдвига.
+const HERO_KB: { x: string; y: string; o: string }[] = [
+  { x: "2.4%", y: "-1.6%", o: "30% 35%" },
+  { x: "-2.6%", y: "1.4%", o: "70% 40%" },
+  { x: "1.8%", y: "2.2%", o: "42% 70%" },
+  { x: "-1.8%", y: "-2.2%", o: "64% 64%" },
+  { x: "2.8%", y: "1%", o: "32% 62%" },
+  { x: "-2.4%", y: "-1.2%", o: "62% 30%" },
+];
+
 function Preloader() {
   const [pct, setPct] = useState(0);
   const [phase, setPhase] = useState<"load" | "exit" | "gone">("load");
@@ -268,6 +302,8 @@ function SoundOffIcon() {
 }
 
 function Hero({ games }: { games: GalleryGame[] }) {
+  const heroRef = useRef<HTMLElement | null>(null);
+  const reduced = usePrefersReducedMotion();
   const baseFeatured = useMemo(
     () =>
       games
@@ -311,17 +347,69 @@ function Hero({ games }: { games: GalleryGame[] }) {
     return () => window.clearInterval(timer);
   }, [featured.length]);
 
+  // Параллакс по курсору: фон шапки мягко смещается вслед за мышью, создавая
+  // глубину «окна в мир игры». Двигаем только CSS-переменные (--px/--py) раз в
+  // кадр через requestAnimationFrame — браузер сам сглаживает сдвиг CSS-переходом,
+  // поэтому это композитная анимация без перерасчёта вёрстки.
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || reduced || !hasFinePointer()) return;
+
+    let frame = 0;
+    let cx = 0;
+    let cy = 0;
+
+    const apply = () => {
+      frame = 0;
+      const rect = el.getBoundingClientRect();
+      const nx = (cx - rect.left) / rect.width - 0.5;
+      const ny = (cy - rect.top) / rect.height - 0.5;
+      el.style.setProperty("--px", `${(nx * 36).toFixed(2)}px`);
+      el.style.setProperty("--py", `${(ny * 24).toFixed(2)}px`);
+    };
+    const onMove = (event: MouseEvent) => {
+      cx = event.clientX;
+      cy = event.clientY;
+      if (!frame) frame = window.requestAnimationFrame(apply);
+    };
+    const onLeave = () => {
+      el.style.setProperty("--px", "0px");
+      el.style.setProperty("--py", "0px");
+    };
+
+    el.addEventListener("mousemove", onMove, { passive: true });
+    el.addEventListener("mouseleave", onLeave);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      el.removeEventListener("mousemove", onMove);
+      el.removeEventListener("mouseleave", onLeave);
+    };
+  }, [reduced]);
+
   return (
-    <section className={`hero${shown ? " shown" : ""}`} data-screen-label="Hero">
+    <section ref={heroRef} className={`hero${shown ? " shown" : ""}`} data-screen-label="Hero">
       <div className="hero-media">
-        {featured.map((item, index) => (
-          <img
-            key={`${item.game.id}-${item.shot.id}`}
-            className={`frame-img${index === active ? " on" : ""}`}
-            src={item.shot.fullSrc}
-            alt=""
-          />
-        ))}
+        {featured.map((item, index) => {
+          const kb = HERO_KB[index % HERO_KB.length];
+
+          return (
+            <img
+              key={`${item.game.id}-${item.shot.id}`}
+              className={`frame-img${index === active ? " on" : ""}`}
+              src={item.shot.fullSrc}
+              alt=""
+              style={
+                {
+                  "--kb-x": kb.x,
+                  "--kb-y": kb.y,
+                  "--kb-origin": kb.o,
+                  animationDelay: `${(-index * 4.3).toFixed(1)}s`,
+                } as CSSProperties
+              }
+            />
+          );
+        })}
       </div>
       <div className="hero-grade" />
 
@@ -370,9 +458,90 @@ function Hero({ games }: { games: GalleryGame[] }) {
 }
 
 function Collections({ games }: { games: GalleryGame[] }) {
+  const reduced = usePrefersReducedMotion();
+  const sectionRef = useRef<HTMLElement | null>(null);
+  // Эти классы держим в state, чтобы className оставался единственным источником
+  // правды (перерендер не сотрёт классы, которые иначе пришлось бы ставить вручную).
+  const [ready, setReady] = useState(false);
+  const [spotOn, setSpotOn] = useState(false);
+
+  // Хореография появления: строки альбомов всплывают по очереди, когда входят в
+  // экран. Класс is-ready включает стартовое «спрятанное» состояние только когда
+  // JS реально готов его раскрыть (без JS контент виден как обычно). Сам класс in
+  // навешиваем на строки напрямую — их className-проп постоянен, перерендер не трогает.
+  useEffect(() => {
+    const root = sectionRef.current;
+    if (!root) return;
+
+    const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
+
+    if (reduced) {
+      targets.forEach((el) => el.classList.add("in"));
+      return;
+    }
+
+    const raf = window.requestAnimationFrame(() => setReady(true));
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    targets.forEach((el) => io.observe(el));
+    return () => {
+      window.cancelAnimationFrame(raf);
+      io.disconnect();
+    };
+  }, [reduced, games.length]);
+
+  // Пятно света за курсором: композитная анимация (двигаем элемент через
+  // transform по CSS-переменным), репейнта вёрстки нет.
+  useEffect(() => {
+    const root = sectionRef.current;
+    if (!root || reduced || !hasFinePointer()) return;
+
+    let frame = 0;
+    let cx = 0;
+    let cy = 0;
+
+    const apply = () => {
+      frame = 0;
+      const rect = root.getBoundingClientRect();
+      root.style.setProperty("--mx", `${(cx - rect.left).toFixed(1)}px`);
+      root.style.setProperty("--my", `${(cy - rect.top).toFixed(1)}px`);
+    };
+    const onMove = (event: MouseEvent) => {
+      cx = event.clientX;
+      cy = event.clientY;
+      if (!frame) frame = window.requestAnimationFrame(apply);
+    };
+
+    root.addEventListener("mousemove", onMove, { passive: true });
+    const raf = window.requestAnimationFrame(() => setSpotOn(true));
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      if (frame) window.cancelAnimationFrame(frame);
+      root.removeEventListener("mousemove", onMove);
+      setSpotOn(false);
+    };
+  }, [reduced]);
+
   return (
-    <section className="collections" id="collections" data-screen-label="Collections">
-      <div className="sec-head">
+    <section
+      ref={sectionRef}
+      className={`collections${ready ? " is-ready" : ""}${spotOn ? " spot" : ""}`}
+      id="collections"
+      data-screen-label="Collections"
+    >
+      <div className="spotlight" aria-hidden="true" />
+      <div className="sec-head" data-reveal>
         <h2 className="serif">Collections</h2>
         <div className="cnt">{String(games.length).padStart(2, "0")} Archives</div>
       </div>
@@ -388,8 +557,9 @@ function Collections({ games }: { games: GalleryGame[] }) {
             type="button"
             className={`album-row${empty ? " empty" : ""}`}
             data-screen-label={`Album row - ${game.title}`}
+            data-reveal
             onClick={() => !empty && setHash(`/a/${encodeURIComponent(game.id)}`)}
-            style={accentStyle(game.accent)}
+            style={{ ...accentStyle(game.accent), transitionDelay: `${(index * 0.05).toFixed(2)}s` }}
             disabled={empty}
           >
             <div className="idx">{String(index + 1).padStart(2, "0")}</div>
@@ -418,7 +588,7 @@ function Collections({ games }: { games: GalleryGame[] }) {
         );
       })}
 
-      <div className="site-foot">
+      <div className="site-foot" data-reveal>
         <p>© 2026 Oleg Krugliak</p>
         <div className="lks" aria-label="Archive metadata">
           <span>Archive in motion</span>
@@ -541,6 +711,18 @@ function Carousel3D({
   const [pos, setPos] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [spinning, setSpinning] = useState(false);
+  const reduced = usePrefersReducedMotion();
+
+  // Скоростное свечение барабана: чем быстрее крутится, тем ярче ореол в цвет
+  // альбома (CSS-переменная --spin, 0..1). Гаснет, когда барабан останавливается.
+  const setSpin = useCallback(
+    (raw: number) => {
+      const el = stageRef.current;
+      if (!el) return;
+      el.style.setProperty("--spin", reduced ? "0" : Math.min(1, Math.abs(raw) / 16).toFixed(3));
+    },
+    [reduced]
+  );
 
   const realCount = shots.length;
   const slotCount = realCount >= 6 ? realCount : realCount * Math.max(2, Math.ceil(7 / realCount));
@@ -580,10 +762,11 @@ function Carousel3D({
   // Доводим барабан до ближайшей карточки и возвращаем плавную CSS-анимацию.
   const settle = useCallback(() => {
     setSpinning(false);
+    setSpin(0);
     const target = Math.round(posRef.current);
     posRef.current = target;
     setPos(target);
-  }, []);
+  }, [setSpin]);
 
   // Свободный ход по инерции: каждый кадр двигаем барабан и гасим скорость трением.
   // Скорость живёт в velocity.current, поэтому её можно подкручивать на лету (колесо, повторный бросок).
@@ -599,6 +782,7 @@ function Carousel3D({
       setPos(posRef.current);
       // Экспоненциальное трение: за секунду скорость падает примерно до 12%.
       velocity.current *= Math.pow(0.12, dt);
+      setSpin(velocity.current);
 
       if (Math.abs(velocity.current) < 0.5) {
         momentumRef.current = null;
@@ -610,7 +794,7 @@ function Carousel3D({
     };
 
     momentumRef.current = requestAnimationFrame(tick);
-  }, [settle]);
+  }, [settle, setSpin]);
 
   // Толчок маховика: и бросок мышью, и щелчок колеса добавляют скорость в общий механизм инерции.
   const addSpin = useCallback(
@@ -642,6 +826,7 @@ function Carousel3D({
       drag.current.lastT = now;
       posRef.current = newPos;
       setPos(newPos);
+      setSpin(drag.current.vel);
     };
     const up = () => {
       setDragging(false);
@@ -669,17 +854,18 @@ function Carousel3D({
       window.removeEventListener("touchmove", move);
       window.removeEventListener("touchend", up);
     };
-  }, [cardWidth, dragging, settle, addSpin]);
+  }, [cardWidth, dragging, settle, addSpin, setSpin]);
 
   const go = useCallback(
     (direction: number) => {
       stopMomentum();
       setSpinning(false);
+      setSpin(0);
       const target = Math.round(posRef.current) + direction;
       posRef.current = target;
       setPos(target);
     },
-    [stopMomentum]
+    [stopMomentum, setSpin]
   );
 
   useEffect(() => {
@@ -812,6 +998,7 @@ function Carousel3D({
               >
                 <div className="shot">
                   <img src={shot.displaySrc} alt={shot.annotation} draggable="false" />
+                  <span className="gloss" aria-hidden="true" />
                   <span className="ix">{String((slot % realCount) + 1).padStart(2, "0")}</span>
                   <span className="openhint">View frame</span>
                 </div>
