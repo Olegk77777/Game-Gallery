@@ -790,12 +790,14 @@ html[data-grain="off"] .grain {
   animation: card-gloss-sweep var(--g-dur, 6.5s) var(--ease-soft) infinite;
 }
 
-/* Вспышка: пятно света коротко загорается в заданной точке и гаснет. */
+/* Вспышка: мягкое пятно света коротко загорается в заданной точке и гаснет.
+   Размер (--g-size) и яркость (--g-peak) — случайные, по «характеру» блика. */
 .card3d .gloss.gloss-flash {
   background: radial-gradient(
     circle at var(--g-ax, 50%) var(--g-ay, 50%),
-    rgba(255, 255, 255, 0.85) 0%,
-    transparent 40%
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.28) calc(var(--g-size, 38%) * 0.55),
+    transparent var(--g-size, 38%)
   );
   animation: card-gloss-flash var(--g-dur, 4.5s) var(--ease) infinite;
 }

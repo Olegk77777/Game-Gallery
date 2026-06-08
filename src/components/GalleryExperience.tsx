@@ -230,7 +230,7 @@ const PUSH_EASE = "cubic-bezier(0.22, 0.61, 0.36, 1)";
 // короткую вспышку-блик в случайной точке кадра.
 type GlossVariant =
   | { id: number; kind: "sweep"; idx: number; angle: number; x0: number; y0: number; x1: number; y1: number; dur: number }
-  | { id: number; kind: "flash"; idx: number; ax: number; ay: number; peak: number; dur: number };
+  | { id: number; kind: "flash"; idx: number; ax: number; ay: number; size: number; peak: number; dur: number };
 
 // Векторы луча: → ← ↓ ↑ и четыре диагонали (угол градиента ⟂ направлению движения).
 const GLOSS_SWEEP = [
@@ -244,25 +244,40 @@ const GLOSS_SWEEP = [
   { angle: 52, x0: 66, y0: -60, x1: -66, y1: 60 },
 ];
 
-// Точки вспышки-блика (в % от кадра).
-const GLOSS_FLASH = [
-  { ax: 28, ay: 30 },
-  { ax: 72, ay: 32 },
-  { ax: 50, ay: 46 },
-  { ax: 36, ay: 70 },
+// «Характеры» вспышки-блика: spark — мелкий/быстрый/чуть ярче, glint — средний,
+// bloom — крупный/тусклый/медленный. Позиция всегда случайная по кадру, внутри
+// характера джиттерим размер/яркость/длительность. Яркость держим низкой, чтобы
+// блик не перебивал картинку. [min, max] для каждого параметра.
+const GLOSS_FLASH_FLAVORS = [
+  { size: [18, 26], peak: [0.12, 0.18], dur: [2.4, 3.4] }, // spark
+  { size: [28, 40], peak: [0.1, 0.15], dur: [3.4, 4.8] }, // glint
+  { size: [42, 56], peak: [0.07, 0.11], dur: [4.8, 7.0] }, // bloom
 ];
 
 let glossSeq = 0;
 
+function randIn(min: number, max: number) {
+  return min + Math.random() * (max - min);
+}
+
 function pickGloss(prev: GlossVariant | null): GlossVariant {
   glossSeq += 1;
 
-  // ~30% проходов — вспышка вместо луча.
-  if (Math.random() < 0.3) {
-    let idx = Math.floor(Math.random() * GLOSS_FLASH.length);
-    if (prev && prev.kind === "flash" && idx === prev.idx) idx = (idx + 1) % GLOSS_FLASH.length;
-    const v = GLOSS_FLASH[idx];
-    return { id: glossSeq, kind: "flash", idx, ax: v.ax, ay: v.ay, peak: 0.12 + Math.random() * 0.06, dur: 3.6 + Math.random() * 1.4 };
+  // ~70% проходов — вспышка-блик, ~30% — луч.
+  if (Math.random() < 0.7) {
+    let f = Math.floor(Math.random() * GLOSS_FLASH_FLAVORS.length);
+    if (prev && prev.kind === "flash" && f === prev.idx) f = (f + 1) % GLOSS_FLASH_FLAVORS.length;
+    const fl = GLOSS_FLASH_FLAVORS[f];
+    return {
+      id: glossSeq,
+      kind: "flash",
+      idx: f,
+      ax: Math.round(randIn(16, 84)),
+      ay: Math.round(randIn(22, 78)),
+      size: Math.round(randIn(fl.size[0], fl.size[1])),
+      peak: randIn(fl.peak[0], fl.peak[1]),
+      dur: randIn(fl.dur[0], fl.dur[1]),
+    };
   }
 
   let idx = Math.floor(Math.random() * GLOSS_SWEEP.length);
@@ -276,6 +291,7 @@ function glossVars(g: GlossVariant): CSSProperties {
     return {
       "--g-ax": `${g.ax}%`,
       "--g-ay": `${g.ay}%`,
+      "--g-size": `${g.size}%`,
       "--g-peak": g.peak.toFixed(3),
       "--g-dur": `${g.dur.toFixed(2)}s`,
     } as CSSProperties;
