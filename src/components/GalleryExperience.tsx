@@ -522,6 +522,13 @@ function Hero({ games }: { games: GalleryGame[] }) {
           );
         })}
       </div>
+      <div
+        className="hero-beam"
+        style={{ "--beam": current?.game.accent } as CSSProperties}
+        aria-hidden="true"
+      >
+        <span className="hero-beam-shaft" />
+      </div>
       <div className="hero-grade" />
 
       <div className="hero-content">
