@@ -767,31 +767,62 @@ html[data-grain="off"] .grain {
   object-fit: cover;
 }
 
-/* «Стеклянный» блик на активной карточке барабана — медленно скользит по кадру. */
+/* «Стеклянный» блик на активной карточке барабана. Два вида, вектор/точка —
+   случайные (CSS-переменные из JS): луч-проход и короткая вспышка-блик. */
 .card3d .gloss {
   position: absolute;
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background: linear-gradient(118deg, transparent 44%, rgba(255, 255, 255, 0.12) 50%, transparent 56%);
   opacity: 0;
-  transform: translateX(-45%);
   transition: opacity 0.6s var(--ease);
 }
 
-.card3d.active .gloss {
+/* Луч: узкая полоса света едет по кадру под заданным углом из точки A в точку B. */
+.card3d .gloss.gloss-sweep {
+  background: linear-gradient(
+    var(--g-angle, 118deg),
+    transparent 44%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 56%
+  );
   opacity: 1;
-  animation: card-gloss 7s var(--ease-soft) infinite;
+  animation: card-gloss-sweep var(--g-dur, 6.5s) var(--ease-soft) infinite;
 }
 
-@keyframes card-gloss {
+/* Вспышка: пятно света коротко загорается в заданной точке и гаснет. */
+.card3d .gloss.gloss-flash {
+  background: radial-gradient(
+    circle at var(--g-ax, 50%) var(--g-ay, 50%),
+    rgba(255, 255, 255, 0.85) 0%,
+    transparent 40%
+  );
+  animation: card-gloss-flash var(--g-dur, 4.5s) var(--ease) infinite;
+}
+
+@keyframes card-gloss-sweep {
   0% {
-    transform: translateX(-65%);
+    transform: translate(var(--g-x0, -65%), var(--g-y0, 0%));
   }
 
   22%,
   100% {
-    transform: translateX(65%);
+    transform: translate(var(--g-x1, 65%), var(--g-y1, 0%));
+  }
+}
+
+@keyframes card-gloss-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  12% {
+    opacity: var(--g-peak, 0.15);
+  }
+
+  36% {
+    opacity: 0;
   }
 }
 

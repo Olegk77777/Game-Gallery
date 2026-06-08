@@ -225,6 +225,71 @@ function flipInvert(from: DOMRect, to: DOMRect) {
 
 const PUSH_EASE = "cubic-bezier(0.22, 0.61, 0.36, 1)";
 
+// Блик на активной карточке барабана. Чтобы он не приедался при перелистывании,
+// каждый проход выбираем случайный вектор «луча» — а иногда вместо луча даём
+// короткую вспышку-блик в случайной точке кадра.
+type GlossVariant =
+  | { id: number; kind: "sweep"; idx: number; angle: number; x0: number; y0: number; x1: number; y1: number; dur: number }
+  | { id: number; kind: "flash"; idx: number; ax: number; ay: number; peak: number; dur: number };
+
+// Векторы луча: → ← ↓ ↑ и четыре диагонали (угол градиента ⟂ направлению движения).
+const GLOSS_SWEEP = [
+  { angle: 108, x0: -78, y0: 0, x1: 78, y1: 0 },
+  { angle: 72, x0: 78, y0: 0, x1: -78, y1: 0 },
+  { angle: 18, x0: 0, y0: -88, x1: 0, y1: 88 },
+  { angle: 162, x0: 0, y0: 88, x1: 0, y1: -88 },
+  { angle: 128, x0: -66, y0: -60, x1: 66, y1: 60 },
+  { angle: 128, x0: 66, y0: 60, x1: -66, y1: -60 },
+  { angle: 52, x0: -66, y0: 60, x1: 66, y1: -60 },
+  { angle: 52, x0: 66, y0: -60, x1: -66, y1: 60 },
+];
+
+// Точки вспышки-блика (в % от кадра).
+const GLOSS_FLASH = [
+  { ax: 28, ay: 30 },
+  { ax: 72, ay: 32 },
+  { ax: 50, ay: 46 },
+  { ax: 36, ay: 70 },
+];
+
+let glossSeq = 0;
+
+function pickGloss(prev: GlossVariant | null): GlossVariant {
+  glossSeq += 1;
+
+  // ~30% проходов — вспышка вместо луча.
+  if (Math.random() < 0.3) {
+    let idx = Math.floor(Math.random() * GLOSS_FLASH.length);
+    if (prev && prev.kind === "flash" && idx === prev.idx) idx = (idx + 1) % GLOSS_FLASH.length;
+    const v = GLOSS_FLASH[idx];
+    return { id: glossSeq, kind: "flash", idx, ax: v.ax, ay: v.ay, peak: 0.12 + Math.random() * 0.06, dur: 3.6 + Math.random() * 1.4 };
+  }
+
+  let idx = Math.floor(Math.random() * GLOSS_SWEEP.length);
+  if (prev && prev.kind === "sweep" && idx === prev.idx) idx = (idx + 1) % GLOSS_SWEEP.length;
+  const v = GLOSS_SWEEP[idx];
+  return { id: glossSeq, kind: "sweep", idx, angle: v.angle, x0: v.x0, y0: v.y0, x1: v.x1, y1: v.y1, dur: 5.4 + Math.random() * 2.4 };
+}
+
+function glossVars(g: GlossVariant): CSSProperties {
+  if (g.kind === "flash") {
+    return {
+      "--g-ax": `${g.ax}%`,
+      "--g-ay": `${g.ay}%`,
+      "--g-peak": g.peak.toFixed(3),
+      "--g-dur": `${g.dur.toFixed(2)}s`,
+    } as CSSProperties;
+  }
+  return {
+    "--g-angle": `${g.angle}deg`,
+    "--g-x0": `${g.x0}%`,
+    "--g-y0": `${g.y0}%`,
+    "--g-x1": `${g.x1}%`,
+    "--g-y1": `${g.y1}%`,
+    "--g-dur": `${g.dur.toFixed(2)}s`,
+  } as CSSProperties;
+}
+
 // Разные траектории «дрейфа» (Ken Burns) для кадров шапки — чтобы каждый кадр
 // жил по-своему: своя точка отсчёта масштаба и направление сдвига.
 const HERO_KB: { x: string; y: string; o: string }[] = [
@@ -761,6 +826,14 @@ function Carousel3D({
     [reduced]
   );
 
+  // Текущий вариант блика активной карты. Меняется в конце каждого цикла анимации
+  // (onAnimationIteration) — так каждый проход получает новый случайный вектор/вспышку.
+  const [gloss, setGloss] = useState<GlossVariant>(() => pickGloss(null));
+  const cycleGloss = useCallback(() => {
+    if (reduced) return; // при reduced-motion анимация почти мгновенная — не дёргаем state
+    setGloss((g) => pickGloss(g));
+  }, [reduced]);
+
   const realCount = shots.length;
   const slotCount = realCount >= 6 ? realCount : realCount * Math.max(2, Math.ceil(7 / realCount));
   const step = 360 / slotCount;
@@ -770,6 +843,13 @@ function Carousel3D({
   const rotation = pos * step;
   const frontSlot = ((Math.round(pos) % slotCount) + slotCount) % slotCount;
   const activeReal = frontSlot % realCount;
+
+  // Новая активная карта — новый случайный вектор луча (отложенно на кадр, чтобы
+  // не дёргать state синхронно в эффекте).
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => setGloss((g) => pickGloss(g)));
+    return () => window.cancelAnimationFrame(id);
+  }, [activeReal]);
 
   useEffect(() => {
     const element = stageRef.current;
@@ -1039,7 +1119,13 @@ function Carousel3D({
               >
                 <div className="shot">
                   <img src={shot.displaySrc} alt={shot.annotation} draggable="false" />
-                  <span className="gloss" aria-hidden="true" />
+                  <span
+                    key={isFront ? `gloss-${gloss.id}` : "gloss"}
+                    className={`gloss${isFront ? ` gloss-${gloss.kind}` : ""}`}
+                    style={isFront ? glossVars(gloss) : undefined}
+                    onAnimationIteration={isFront && !reduced ? cycleGloss : undefined}
+                    aria-hidden="true"
+                  />
                   <span className="ix">{String((slot % realCount) + 1).padStart(2, "0")}</span>
                   <span className="openhint">View frame</span>
                 </div>
