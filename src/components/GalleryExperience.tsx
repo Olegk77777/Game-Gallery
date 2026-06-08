@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import type { CSSProperties, PointerEvent, TouchEvent, WheelEvent } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Game as SourceGame, Screenshot as SourceShot } from "@/lib/gallery";
 
 type GalleryShot = SourceShot & {
@@ -194,6 +194,36 @@ function usePrefersReducedMotion() {
 function hasFinePointer() {
   return typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches;
 }
+
+// Синхронная проверка «уменьшить движение» — для эффектов, решение по которым
+// нужно принять прямо в момент монтирования (хук обновляет state только в effect).
+function prefersReducedMotionNow() {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+// Прямоугольник реально видим на экране и пригоден для морфа (не нулевой, в кадре).
+function rectUsable(r: DOMRect | null | undefined): r is DOMRect {
+  return (
+    !!r &&
+    r.width > 4 &&
+    r.height > 4 &&
+    r.right > 0 &&
+    r.bottom > 0 &&
+    r.left < window.innerWidth &&
+    r.top < window.innerHeight
+  );
+}
+
+// FLIP-инверсия: трансформ, который визуально кладёт элемент `to` поверх `from`.
+// Анимируем ТОЛЬКО transform (translate+scale) — это работа композитора, без пейнта.
+function flipInvert(from: DOMRect, to: DOMRect) {
+  const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+  const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+  const scale = from.width / to.width;
+  return `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${scale.toFixed(4)})`;
+}
+
+const PUSH_EASE = "cubic-bezier(0.22, 0.61, 0.36, 1)";
 
 // Разные траектории «дрейфа» (Ken Burns) для кадров шапки — чтобы каждый кадр
 // жил по-своему: своя точка отсчёта масштаба и направление сдвига.
@@ -608,6 +638,9 @@ function AlbumView({
 }) {
   const [shown, setShown] = useState(false);
   const lightboxOpen = shotIndex !== null && game.shots.length > 0;
+  // Прямоугольник карты, из которой открыли кадр — источник «наезда камеры».
+  // Живёт в AlbumView, т.к. Carousel3D (пишет) и Lightbox (читает) — соседи.
+  const [originRect, setOriginRect] = useState<DOMRect | null>(null);
 
   useBodyLock(true);
 
@@ -655,7 +688,10 @@ function AlbumView({
           shots={game.shots}
           accent={game.accent}
           keyboardEnabled={!lightboxOpen}
-          onOpen={(index) => setHash(`/a/${encodeURIComponent(game.id)}/${index}`)}
+          onOpen={(index, rect) => {
+            setOriginRect(rect ?? null);
+            setHash(`/a/${encodeURIComponent(game.id)}/${index}`);
+          }}
         />
       ) : (
         <div className="av-empty">
@@ -671,6 +707,7 @@ function AlbumView({
         <Lightbox
           game={game}
           index={Math.max(0, Math.min(shotIndex, game.shots.length - 1))}
+          originRect={originRect}
           onClose={() => setHash(`/a/${encodeURIComponent(game.id)}`)}
         />
       )}
@@ -692,7 +729,7 @@ function Carousel3D({
   shots: GalleryShot[];
   accent: string;
   keyboardEnabled: boolean;
-  onOpen: (index: number) => void;
+  onOpen: (index: number, originRect?: DOMRect | null) => void;
 }) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const drag = useRef<{
@@ -943,7 +980,11 @@ function Carousel3D({
   const handleClick = (slot: number) => {
     if (suppressClick.current) return;
     if (slot === frontSlot) {
-      onOpen(slot % realCount);
+      // Замеряем живой прямоугольник кликнутой (активной) карты — отсюда «вылетит»
+      // кадр в полный экран (FLIP-морф в лайтбоксе). Если не нашли — лайтбокс
+      // откроется обычным способом.
+      const cardImg = stageRef.current?.querySelector<HTMLImageElement>(".card3d.active .shot img");
+      onOpen(slot % realCount, cardImg?.getBoundingClientRect() ?? null);
     } else {
       stopMomentum();
       setSpinning(false);
@@ -1035,15 +1076,26 @@ function Carousel3D({
 function Lightbox({
   game,
   index,
+  originRect,
   onClose,
 }: {
   game: GalleryGame;
   index: number;
+  originRect: DOMRect | null;
   onClose: () => void;
 }) {
   const [shown, setShown] = useState(false);
   const [offset, setOffset] = useState<{ dy: number } | null>(null);
+  // morphStyle — инлайн-трансформ кадра во время «наезда»/«отъезда» камеры (FLIP).
+  // Пока он не null, он полностью владеет transform/opacity картинки (перебивает CSS).
+  const [morphStyle, setMorphStyle] = useState<CSSProperties | null>(null);
+  // armed — drag-to-close включается только ПОСЛЕ входного наезда, чтобы жесты не столкнулись.
+  const [armed, setArmed] = useState(false);
+  const [src, setSrc] = useState(game.shots[index]?.displaySrc ?? "");
   const drag = useRef<{ x0: number; y0: number; dx: number; dy: number } | null>(null);
+  const lbImgRef = useRef<HTMLImageElement | null>(null);
+  const originCaptured = useRef(originRect);
+  const closing = useRef(false);
   const shot = game.shots[index];
 
   useEffect(() => {
@@ -1051,14 +1103,127 @@ function Lightbox({
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
-  const close = useCallback(() => {
-    setShown(false);
-    window.setTimeout(onClose, 380);
-  }, [onClose]);
+  // ВХОД: «наезд камеры». Кадр стартует ровно поверх кликнутой карты барабана и
+  // доезжает до полноэкранного положения. Анимируется только transform (композитно).
+  useLayoutEffect(() => {
+    const img = lbImgRef.current;
+    const from = originCaptured.current;
+
+    // Нет карты-источника / она за кадром / включён reduced-motion → без морфа:
+    // лайтбокс открывается обычным CSS-появлением (scale .86 → 1).
+    if (!img || !rectUsable(from) || prefersReducedMotionNow()) {
+      const id = window.requestAnimationFrame(() => setArmed(true));
+      return () => window.cancelAnimationFrame(id);
+    }
+
+    const node = img; // не-null после guard; держим в локали для замыканий
+    // База даёт `.lb-img { transform: scale(0.86) }` — снимаем его, чтобы померить
+    // ИСТИННЫЙ конечный прямоугольник (scale 1). Делаем это до пейнта, в layout-effect.
+    node.style.transform = "none";
+    const to = node.getBoundingClientRect();
+    // INVERT: ставим кадр на место карты (мгновенно, без перехода).
+    setMorphStyle({ transform: flipInvert(from, to), opacity: 1, transition: "none", willChange: "transform" });
+
+    let raf1 = 0;
+    let raf2 = 0;
+    let timer = 0;
+
+    function finish() {
+      window.clearTimeout(timer);
+      node.removeEventListener("transitionend", onEnd);
+      setMorphStyle(null);
+      setArmed(true);
+    }
+    function onEnd(event: TransitionEvent) {
+      if (event.propertyName === "transform") finish();
+    }
+
+    // PLAY: следующим кадром снимаем трансформ → CSS-переход проигрывает наезд.
+    raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        setMorphStyle({ transform: "none", opacity: 1, transition: `transform 0.52s ${PUSH_EASE}`, willChange: "transform" });
+        node.addEventListener("transitionend", onEnd);
+        timer = window.setTimeout(finish, 640); // фолбэк: transitionend может не сработать
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+      window.clearTimeout(timer);
+      node.removeEventListener("transitionend", onEnd);
+    };
+    // Запуск один раз на монтировании (originRect/shot фиксируются на маунте).
+  }, []);
+
+  // Тяжёлый оригинал грузим ТОЛЬКО после того, как наезд осел, и через decode() —
+  // чтобы декод 2560px/4K не дёргал кадр анимации на слабых устройствах.
+  useEffect(() => {
+    if (!armed || !shot || src === shot.fullSrc) return;
+    let cancelled = false;
+    const apply = () => {
+      if (!cancelled) setSrc(shot.fullSrc);
+    };
+    const hi = new Image();
+    hi.src = shot.fullSrc;
+    if (hi.decode) hi.decode().then(apply).catch(apply);
+    else {
+      hi.onload = apply;
+      if (hi.complete) apply();
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [armed, shot, src]);
+
+  // ВЫХОД: по клику/Esc/крестику кадр «отъезжает» обратно в свой слот барабана.
+  // Свайп вниз (viaDrag) закрывает прежним мягким сворачиванием — не морфим, чтобы
+  // жест перетаскивания не конфликтовал с обратным наездом.
+  const close = useCallback(
+    (viaDrag: boolean) => {
+      if (closing.current) return;
+      closing.current = true;
+
+      const img = lbImgRef.current;
+      const target = document
+        .querySelector<HTMLImageElement>(".card3d.active .shot img")
+        ?.getBoundingClientRect();
+
+      if (viaDrag || !img || !rectUsable(target) || prefersReducedMotionNow()) {
+        setShown(false);
+        window.setTimeout(onClose, 380);
+        return;
+      }
+
+      const node = img; // не-null после guard; держим в локали для замыканий
+      setShown(false); // затемнение уходит, барабан проступает
+      const fromRect = node.getBoundingClientRect();
+      setMorphStyle({ transform: "none", opacity: 1, transition: "none", willChange: "transform" });
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          setMorphStyle({
+            transform: flipInvert(target, fromRect),
+            opacity: 0,
+            transition: `transform 0.46s ${PUSH_EASE}, opacity 0.46s ease`,
+            willChange: "transform",
+          });
+        });
+      });
+
+      const done = () => {
+        node.removeEventListener("transitionend", done);
+        onClose();
+      };
+      node.addEventListener("transitionend", done);
+      window.setTimeout(done, 560);
+    },
+    [onClose]
+  );
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
+      if (event.key === "Escape") close(false);
     };
 
     window.addEventListener("keydown", handleKey);
@@ -1066,6 +1231,7 @@ function Lightbox({
   }, [close]);
 
   const onDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!armed || closing.current) return; // во время наезда жесты не ловим
     const target = event.target as HTMLElement;
     if (target.closest("button")) return;
 
@@ -1088,13 +1254,13 @@ function Lightbox({
     drag.current = null;
     setOffset(null);
 
-    // Палец/курсор почти не двигался — это клик по кадру: сворачиваем обратно в барабан.
     const moved = Math.abs(dx) > 10 || Math.abs(dy) > 10;
-    // Либо потянули кадр вниз — тоже закрываем.
-    if (!moved || (dy > 90 && dy > Math.abs(dx))) close();
+    // Клик по кадру → обратный наезд. Свайп вниз → мягкое сворачивание.
+    if (!moved) close(false);
+    else if (dy > 90 && dy > Math.abs(dx)) close(true);
   };
 
-  const dragStyle = offset
+  const dragStyle: CSSProperties = offset
     ? {
         transform: `translateY(${Math.max(0, offset.dy) * 0.5}px) scale(${
           1 - Math.min(Math.max(0, offset.dy), 320) / 1600
@@ -1107,19 +1273,27 @@ function Lightbox({
   if (!shot) return null;
 
   return (
-    <div className={`lightbox${shown ? " in" : ""}`} style={accentStyle(game.accent)}>
+    <div className={`lightbox${shown ? " in" : ""}${morphStyle ? " morphing" : ""}`} style={accentStyle(game.accent)}>
       <div className="lb-top">
         <div className="meta">{game.full}</div>
         <div className="lb-count">
           <b>{String(index + 1).padStart(2, "0")}</b> / {String(game.shots.length).padStart(2, "0")}
         </div>
-        <button className="lb-close" type="button" onClick={close} aria-label="Close">
+        <button className="lb-close" type="button" onClick={() => close(false)} aria-label="Close">
           ✕
         </button>
       </div>
 
       <div className="lb-stage" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
-        <img className="lb-img" key={shot.id} src={shot.fullSrc} alt={shot.annotation} style={dragStyle} draggable="false" />
+        <img
+          className="lb-img"
+          key={shot.id}
+          ref={lbImgRef}
+          src={src}
+          alt={shot.annotation}
+          style={morphStyle ?? dragStyle}
+          draggable="false"
+        />
         <div className="lb-hint">Click frame to return to carousel</div>
       </div>
 

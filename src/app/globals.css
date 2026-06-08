@@ -1056,6 +1056,12 @@ html[data-grain="off"] .grain {
   pointer-events: none;
   text-transform: uppercase;
   transform: translateX(-50%);
+  transition: opacity 0.3s var(--ease);
+}
+
+/* Во время «наезда камеры» (FLIP-морф) подсказку прячем — она мешает читать жест. */
+.lightbox.morphing .lb-hint {
+  opacity: 0;
 }
 
 .lb-cap {
