@@ -1452,16 +1452,6 @@ export default function GalleryExperience({ games }: { games: SourceGame[] }) {
     <>
       <Preloader />
       <div className="chrome">
-        <a
-          className="wordmark"
-          href="#/"
-          onClick={() => {
-            setHash("/");
-          }}
-        >
-          <span className="gm serif">Game Gallery</span>
-          <span className="tag">Archive</span>
-        </a>
         <SoundToggle />
       </div>
 

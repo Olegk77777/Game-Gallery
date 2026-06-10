@@ -105,32 +105,13 @@ img {
   z-index: 40;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 26px 40px;
   pointer-events: none;
 }
 
 .chrome > * {
   pointer-events: auto;
-}
-
-.wordmark {
-  display: flex;
-  align-items: baseline;
-  gap: 18px;
-}
-
-.wordmark .gm {
-  font-size: 21px;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-
-.wordmark .tag {
-  color: var(--ink-3);
-  font-size: 10.5px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
 }
 
 .sound {
@@ -1274,7 +1255,6 @@ html[data-grain="off"] .grain {
     padding: 18px 20px;
   }
 
-  .wordmark .tag,
   .sound span {
     display: none;
   }
