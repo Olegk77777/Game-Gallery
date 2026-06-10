@@ -4,7 +4,12 @@
 
 import type { CSSProperties, PointerEvent, TouchEvent, WheelEvent } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import type { Game as SourceGame, Screenshot as SourceShot } from "@/lib/gallery";
+
+// Пыль киносвета (WebGL/three) — ленивый чанк: основной бандл не растёт,
+// загружается уже после первого пейнта hero и только если нет reduced-motion.
+const CinemaDust = dynamic(() => import("./CinemaDust"), { ssr: false });
 
 type GalleryShot = SourceShot & {
   displaySrc: string;
@@ -412,9 +417,11 @@ function SoundOffIcon() {
   );
 }
 
-function Hero({ games }: { games: GalleryGame[] }) {
+function Hero({ games, suspended }: { games: GalleryGame[]; suspended: boolean }) {
   const heroRef = useRef<HTMLElement | null>(null);
   const reduced = usePrefersReducedMotion();
+  // Пыль включаем с задержкой: пусть сперва прогрузятся кадры hero и уйдёт прелоадер.
+  const [dustOn, setDustOn] = useState(false);
   const baseFeatured = useMemo(
     () =>
       games
@@ -433,6 +440,15 @@ function Hero({ games }: { games: GalleryGame[] }) {
     const frame = window.requestAnimationFrame(() => setShown(true));
     return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    if (reduced) return;
+    // Повторный синхронный чек в колбэке: настройка могла смениться, пока таймер ждал.
+    const timer = window.setTimeout(() => {
+      if (!prefersReducedMotionNow()) setDustOn(true);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [reduced]);
 
   // После загрузки тасуем кадры (Фишер–Йейтс), чтобы каждый раз был свой порядок.
   // setState откладываем в rAF — тот же приём, что и для setShown выше.
@@ -529,6 +545,9 @@ function Hero({ games }: { games: GalleryGame[] }) {
       >
         <span className="hero-beam-shaft" />
       </div>
+      {dustOn && !reduced && (
+        <CinemaDust accent={current?.game.accent ?? "#e6a15c"} paused={suspended} pulse={active} />
+      )}
       <div className="hero-grade" />
 
       <div className="hero-content">
@@ -1447,7 +1466,7 @@ export default function GalleryExperience({ games }: { games: SourceGame[] }) {
       </div>
 
       <main>
-        <Hero games={galleryGames} />
+        <Hero games={galleryGames} suspended={Boolean(albumGame)} />
         <Collections games={galleryGames} />
       </main>
 
