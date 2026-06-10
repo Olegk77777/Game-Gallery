@@ -286,6 +286,27 @@ html[data-grain="off"] .grain {
   }
 }
 
+/* Пыль киносвета (Layer 2 луча): WebGL-canvas с объёмными пылинками в луче проектора.
+   Сидит между лучом (.hero-beam) и виньеткой (.hero-grade); события мыши не ловит. */
+.hero-dust {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-dust canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Страховка: при «уменьшить движение» слой не монтируется из JS, но если что — прячем. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-dust {
+    display: none;
+  }
+}
+
 .hero-content {
   position: absolute;
   right: 0;
