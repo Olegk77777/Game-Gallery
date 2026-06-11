@@ -63,6 +63,14 @@ const GAME_META: Record<string, Omit<GalleryGame, "id" | "shots">> = {
     year: 2018,
     accent: "#bfa07a",
   },
+  "Kingdom Come Deliverance II": {
+    title: "Kingdom Come II",
+    full: "Kingdom Come: Deliverance II",
+    place: "Bohemia, 1403",
+    year: 2025,
+    accent: "#c8a36f",
+    cover: "Kingdom Come Deliverance II 2026.06.08 - 20.48.38.02.jpg",
+  },
   "Forza Horizon 6": {
     title: "Forza Horizon 6",
     full: "Forza Horizon 6",
