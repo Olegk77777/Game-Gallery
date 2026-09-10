@@ -21,6 +21,16 @@ The gallery now updates automatically based on the files in the `public/gallery`
 -   **Images**: `.jpg`, `.jpeg`, `.png`, `.webp`
 -   **Text**: `.txt` (UTF-8 encoding recommended)
 
+## HDR Screenshots (`.jxr`)
+
+With HDR on, NVIDIA / Game Bar saves screenshots as `.jxr`, which macOS can't open. Convert them first, from the project folder:
+
+```bash
+uv run scripts/convert-jxr.py ~/Downloads/Скриншоты/Сталкер --out "public/gallery/S.T.A.L.K.E.R. 2 Heart of Chornobyl"
+```
+
+The script maps HDR through a film-like tone curve (deep shadows, soft highlights), lifts night scenes a little and cleans up the file names. `--ev 0.5` makes shots half a stop brighter, `--ev -0.5` darker; `--force` overwrites existing JPGs.
+
 ## Updating the Live Site
 
 Since your site is hosted on GitHub Pages, you need to "push" your changes for them to appear online.
