@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="manager-token" content="__MANAGER_TOKEN__">
+  <meta name="theme-color" content="#141615">
+  <title>Game Gallery — Studio</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Game Gallery Studio"><span class="brand-mark">G<span>G</span></span><span>Game Gallery<small>CURATOR’S STUDIO</small></span></a>
+    <button class="nav-overview" data-action="overview"><span data-icon="grid"></span>Вся коллекция<span id="total-count"></span></button>
+    <div class="sidebar-heading"><span>АЛЬБОМЫ</span><button class="icon-button" data-action="new-album" title="Создать альбом" aria-label="Создать альбом"><span data-icon="plus"></span></button></div>
+    <nav id="albums-nav" aria-label="Альбомы"><div class="loading">Загружаю коллекцию…</div></nav>
+    <div class="sidebar-bottom">
+      <button class="nav-overview" data-action="trash"><span data-icon="trash"></span>Корзина<span data-icon="arrow-up-right"></span></button>
+      <div class="curator"><span class="avatar">O</span><div>Oleg<small>Куратор коллекции</small></div><span class="local-dot" title="Локальное приложение"></span></div>
+    </div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><div class="breadcrumb">СТУДИЯ <span>/</span> <b id="breadcrumb">КОЛЛЕКЦИЯ</b></div><div class="topbar-actions"><span class="local-label">На этом компьютере</span><a class="quiet-button" href="https://olegk77777.github.io/Game-Gallery/" target="_blank" rel="noopener">Открыть сайт<span data-icon="arrow-up-right"></span></a></div></header>
+    <main id="main"><div class="initial-loading"><span class="brand-mark">GG</span><p>Открываю вашу коллекцию…</p></div></main>
+    <footer class="publication-bar">
+      <div class="publish-state"><span id="status-indicator" class="status-indicator"></span><div><strong id="status-title">Подключение к коллекции</strong><small id="status-detail">Скриншоты и подписи сохраняются на компьютере</small></div></div>
+      <div class="publish-controls"><label class="auto-control"><input id="auto-publish" type="checkbox" role="switch"><span class="switch-track"></span><span>Автопубликация</span></label><button id="publish-button" class="primary-button" data-action="publish"><span data-icon="upload"></span>Опубликовать</button></div>
+    </footer>
+  </div>
+  <div id="drop-overlay" hidden><span data-icon="upload"></span><h2>Отпустите — и кадры в альбоме</h2><p>JPG, PNG, WebP · до 64 МБ на файл</p></div>
+  <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+  <dialog id="dialog" aria-labelledby="dialog-title"><div id="dialog-content"></div></dialog>
+  <div id="toasts" aria-live="polite" aria-atomic="false"></div>
+</body>
+</html>

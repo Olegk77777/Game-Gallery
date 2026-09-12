@@ -10,7 +10,9 @@
     "start": "next start",
     "optimize-gallery": "node scripts/optimize-gallery.js",
     "sync-gallery": "node scripts/sync-gallery.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "albums": "node album-manager/launch.mjs",
+    "test:albums": "node --test album-manager/tests/*.test.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -22,6 +24,7 @@
     "next": "16.0.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "sharp": "0.34.5",
     "three": "^0.181.2"
   },
   "devDependencies": {

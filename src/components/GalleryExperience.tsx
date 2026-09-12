@@ -5,6 +5,7 @@
 import type { CSSProperties, PointerEvent, TouchEvent, WheelEvent } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import albumMeta from "@/data/album-meta.json";
 import type { Game as SourceGame, Screenshot as SourceShot } from "@/lib/gallery";
 
 // Пыль киносвета (WebGL/three) — ленивый чанк: основной бандл не растёт,
@@ -33,52 +34,7 @@ type GalleryRoute =
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
-const GAME_META: Record<string, Omit<GalleryGame, "id" | "shots">> = {
-  "The Witcher 3 Wild Hunt": {
-    title: "The Witcher 3",
-    full: "The Witcher 3: Wild Hunt",
-    place: "Velen - No Man's Land",
-    year: 2015,
-    accent: "#e6a15c",
-  },
-  "S.T.A.L.K.E.R. 2 Heart of Chornobyl": {
-    title: "S.T.A.L.K.E.R. 2",
-    full: "S.T.A.L.K.E.R. 2: Heart of Chornobyl",
-    place: "The Zone - Chornobyl",
-    year: 2024,
-    accent: "#cdd66b",
-  },
-  "Cyberpunk 2077": {
-    title: "Cyberpunk 2077",
-    full: "Cyberpunk 2077",
-    place: "Night City",
-    year: 2020,
-    accent: "#e2c84b",
-    cover: "Cyberpunk 2077® 2026.06.05 - 19.43.16.09 копия.jpg",
-  },
-  "Kingdom Come Deliverance": {
-    title: "Kingdom Come",
-    full: "Kingdom Come: Deliverance",
-    place: "Bohemia, 1403",
-    year: 2018,
-    accent: "#bfa07a",
-  },
-  "Kingdom Come Deliverance II": {
-    title: "Kingdom Come II",
-    full: "Kingdom Come: Deliverance II",
-    place: "Bohemia, 1403",
-    year: 2025,
-    accent: "#c8a36f",
-    cover: "Kingdom Come Deliverance II 2026.06.08 - 20.48.38.02.jpg",
-  },
-  "Forza Horizon 6": {
-    title: "Forza Horizon 6",
-    full: "Forza Horizon 6",
-    place: "Japan",
-    year: 2026,
-    accent: "#d98a5b",
-  },
-};
+const GAME_META: Record<string, Omit<GalleryGame, "id" | "shots">> = albumMeta;
 
 function slugify(value: string, fallback: string) {
   const slug = value
@@ -92,7 +48,7 @@ function slugify(value: string, fallback: string) {
 }
 
 function assetPath(pathname: string | undefined) {
-  return pathname ? encodeURI(pathname) : undefined;
+  return pathname ? pathname.split("/").map(encodeURIComponent).join("/") : undefined;
 }
 
 function toGalleryGame(game: SourceGame, index: number): GalleryGame {
