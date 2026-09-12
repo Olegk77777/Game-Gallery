@@ -16,11 +16,13 @@ try {
     const { createManager } = await import('./server.mjs');
     await createManager({ root });
   }
-  const program = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'rundll32' : 'xdg-open';
-  const args = process.platform === 'win32' ? ['url.dll,FileProtocolHandler', origin] : [origin];
-  const child = spawn(program, args, { stdio: 'ignore', detached: true });
-  child.on('error', () => console.log(`Откройте в браузере: ${origin}`));
-  child.unref();
+  if (!process.argv.includes('--no-open')) {
+    const program = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'rundll32' : 'xdg-open';
+    const args = process.platform === 'win32' ? ['url.dll,FileProtocolHandler', origin] : [origin];
+    const child = spawn(program, args, { stdio: 'ignore', detached: true });
+    child.on('error', () => console.log(`Откройте в браузере: ${origin}`));
+    child.unref();
+  }
   console.log(`\nGame Gallery Studio\n${origin}\n\nМенеджер открыт в браузере. Это окно можно свернуть.\nДля выхода используйте «Завершить работу» в менеджере.\n`);
 } catch (error) {
   console.error('\nНе удалось открыть менеджер: ' + error.message);

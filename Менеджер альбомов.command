@@ -10,7 +10,7 @@ if ! node -e 'require("sharp")' >/dev/null 2>&1; then
   echo 'Подготавливаю менеджер. Это нужно только при первом запуске…'
   npm ci || { read '?Не удалось установить зависимости. Нажмите Enter.'; exit 1; }
 fi
-node album-manager/launch.mjs
+node album-manager/launch.mjs "$@"
 if [[ $? -ne 0 ]]; then
   read '?Не удалось запустить менеджер. Нажмите Enter.'
 fi
